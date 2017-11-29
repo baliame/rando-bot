@@ -217,7 +217,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
         args = args.splice(1);
         if (inconsistent) {
-            logger.info('Got command ' + message ' but download is not done yet.');
+            logger.info('Got command ' + message + ' but download is not done yet.');
             return
         }
         switch(cmd) {
