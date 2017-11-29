@@ -1,0 +1,16 @@
+{
+  "name": "rando-bot",
+  "version": "1.0.0",
+  "description": "Generates a seed and does timing for ALTTP rando races organized over discord",
+  "main": "bot.js",
+  "author": "Baliame",
+  "dependencies": {
+    "discord.io": "^2.5.3",
+    "http": "0.0.0",
+    "winston": "^2.4.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "ISC"
+}
