@@ -2,7 +2,6 @@ var Discord = require('discord.io');
 var fs = require('fs');
 var logger = require('winston');
 var http = require('http');
-var auth = require('./auth.json');
 // Configure logger settings
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {
@@ -16,7 +15,7 @@ logger.level = 'debug';
 
 // Initialize Discord Bot
 var bot = new Discord.Client({
-   token: auth.token,
+   token: process.env.TOKEN,
    autorun: true
 });
 
