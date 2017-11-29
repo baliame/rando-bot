@@ -142,7 +142,7 @@ bot.lastStartingRace = function(serverID) {
 }
 
 bot.lastFinished = function(serverID) {
-    if (bot.race[serverID]s.finished.length > 0) {
+    if (bot.races[serverID].finished.length > 0) {
         return bot.races[serverID].finished[bot.races[serverID].finished.length - 1];
     }
     return undefined;
