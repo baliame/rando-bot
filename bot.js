@@ -115,33 +115,33 @@ bot.sendTagged = function(channelID, userID, message) {
 }
 
 
-bot.lastRace = function() {
+bot.lastRace = function(serverID) {
     var max_ts = 0;
     var race = undefined;
-    for (var key in bot.races.latest) {
-        if (bot.races.latest[key].initiated > max_ts && (bot.races.latest[key].status == 'starting' || bot.races.latest[key].status == 'in-progress')) {
-            max_ts = bot.races.latest[key].initiated;
-            race = bot.races.latest[key];
+    for (var key in bot.races[serverID].latest) {
+        if (bot.races[serverID].latest[key].initiated > max_ts && (bot.races[serverID].latest[key].status == 'starting' || bot.races[serverID].latest[key].status == 'in-progress')) {
+            max_ts = bot.races[serverID].latest[key].initiated;
+            race = bot.races[serverID].latest[key];
         }
     }
     return race;
 }
 
-bot.lastStartingRace = function() {
+bot.lastStartingRace = function(serverID) {
     var max_ts = 0;
     var race = undefined;
-    for (var key in bot.races.latest) {
-        if (bot.races.latest[key].initiated > max_ts && bot.races.latest[key].status == 'starting') {
-            max_ts = bot.races.latest[key].initiated;
-            race = bot.races.latest[key];
+    for (var key in bot.races[serverID].latest) {
+        if (bot.races[serverID].latest[key].initiated > max_ts && bot.races[serverID].latest[key].status == 'starting') {
+            max_ts = bot.races[serverID].latest[key].initiated;
+            race = bot.races[serverID].latest[key];
         }
     }
     return race;
 }
 
-bot.lastFinished = function() {
-    if (bot.races.finished.length > 0) {
-        return bot.races.finished[bot.races.finished.length - 1];
+bot.lastFinished = function(serverID) {
+    if (bot.race[serverID]s.finished.length > 0) {
+        return bot.races[serverID].finished[bot.races[serverID].finished.length - 1];
     }
     return undefined;
 }
@@ -201,7 +201,7 @@ bot.findWinner = function(race) {
         return 'unknown'
     }
     for (var key in race.finished) {
-        if (min_ts === undefined || min_ts < race.finished[key]) {
+        if (min_ts === undefined || min_ts > race.finished[key]) {
             min_ts = race.finished[key];
             min_name = key;
         }
@@ -321,7 +321,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         logger.debug('From directed: ' + race);
                     }
                 } else {
-                    race = bot.lastRace();
+                    race = bot.lastRace(serverID);
                     logger.debug('From search: ' + race)
                     if (race === undefined) {
                         bot.sendError(channelID, userID, 'No active randomizer race.');
@@ -501,7 +501,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         logger.debug('From directed: ' + race);
                     }
                 } else {
-                    race = bot.lastStartingRace();
+                    race = bot.lastStartingRace(serverID);
                     logger.debug('From search: ' + race)
                     if (race === undefined) {
                         bot.sendError(channelID, userID, 'No starting randomizer race.');
