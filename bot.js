@@ -80,6 +80,8 @@ bot.saveRaces = function() {
     });
 }
 
+bot.saveRaces();
+
 bot.arr_remove = function(array, element) {
     const index = array.indexOf(element);
     if (index !== -1) {
@@ -399,19 +401,21 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 } else {
                     race_data.push(winner + ' won with a time of ' + bot.niceTimeDiff(race.started, race.finished[winner]));
                 }
-                for (var i = 0; i < race.participants.length; i++) {
-                    var name = race.participants[i];
+                for (var name in race.finished) {
                     if (name == winner) {
                         continue;
                     }
-                    if (name in race.finished) {
-                        race_data.push(name + ' finished with a time of ' + bot.niceTimeDiff(race.started, race.finished[name]));
-                    } else if (name in race.forfeits) {
-                        race_data.push(name + ' forfeited the race at a time of ' + bot.niceTimeDiff(race.started, race.forfeits[name]));
-                    } else {
-                        race_data.push(name + ' is still going or silently quit');
+                    race_data.push(name + ' finished with a time of ' + bot.niceTimeDiff(race.started, race.finished[name]));
+                }
+                for (var name in race.forfeits) {
+                    race_data.push(name + ' forfeited the race at a time of ' + bot.niceTimeDiff(race.started, race.forfeits[name]));
+                }
+                for (var i = 0; i < race.participants.length; i++) {
+                    var name = race.participants[i];
+                    if (name == winner || (name in race.finished) || (name in race.forfeits)) {
+                        continue;
                     }
-
+                    race_data.push(name + ' is still going or silently quit');
                 }
                 bot.sendTagged(channelID, userID, race_data.join('\n'));
             break;
