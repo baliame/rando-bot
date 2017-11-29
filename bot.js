@@ -32,11 +32,14 @@ var bucket_key = "races.json";
 
 
 bot.loadRaces = function() {
+    logger.debug('Starting race load.');
     var params = {
         Bucket: bucket,
         Key: bucket_key,
     };
-    s3.getObject(params, function(err, data) {
+    logger.debug('Initiating S3 connection.');
+    req = s3.getObject(params, function(err, data) {
+        logger.debug('S3 GetObject callback.');
         if (err) {
             logger.error('S3 download - error: ' + err + ' stack: ' + err.stack);
             return
@@ -53,6 +56,7 @@ bot.loadRaces = function() {
         }
         inconsistent = false;
     });
+    logger.debug('Request: ' + req);
 }
 
 bot.loadRaces();
