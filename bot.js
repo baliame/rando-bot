@@ -1,7 +1,7 @@
 var Discord = require('discord.io');
-var fs = require('fs');
 var logger = require('winston');
 var http = require('http');
+var AWS = require('aws-sdk');
 // Configure logger settings
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {
@@ -23,29 +23,54 @@ bot.addServer = function(serverID) {
     bot.races[serverID] = {latest: {}, finished: [], all_by_hash: {}, in_race: {}};
 }
 
+var inconsistent = true;
+
 bot.races = {};
+var s3 = new AWS.S3();
+var bucket = "rando-bot";
+var bucket_key = "races.json";
+
 
 bot.loadRaces = function() {
-    try {
-        var data = fs.readFileSync('races.json');
-    }
-    catch (err) {
-        return;
-    }
-    bot.races = JSON.parse(data);
-    bot.races.all_by_hash = {}
-    for (var key in bot.races.latest) {
-        bot.races.all_by_hash[bot.races.latest[key].hash] = bot.races.latest[key];
-    }
-    for (var i = 0; i < bot.races.finished.length; i++) {
-        bot.races.all_by_hash[bot.races.finished[i].hash] = bot.races.finished[i];
-    }
+    var params = {
+        Bucket: bucket,
+        Key: bucket_key,
+    };
+    s3.getObject(params, function(err, data) {
+        if (err) {
+            logger.error('S3 download - error: ' + err + ' stack: ' + err.stack);
+            return
+        }
+        logger.debug('S3 download - data: ' + data);
+
+        bot.races = JSON.parse(data.Body);
+        bot.races.all_by_hash = {}
+        for (var key in bot.races.latest) {
+            bot.races.all_by_hash[bot.races.latest[key].hash] = bot.races.latest[key];
+        }
+        for (var i = 0; i < bot.races.finished.length; i++) {
+            bot.races.all_by_hash[bot.races.finished[i].hash] = bot.races.finished[i];
+        }
+        inconsistent = false;
+    });
 }
 
 bot.loadRaces();
 
 bot.saveRaces = function() {
-    fs.writeFileSync('races.json', JSON.stringify(bot.races));
+    var data = JSON.stringify(bot.races)
+    var params = {
+        Bucket: bucket,
+        Key: bucket_key,
+        Body: data,
+    }
+    S3.putObject(params, function(err, resp) {
+        if (err) {
+            logger.error('S3 upload - error: ' + err + ' stack: ' + err.stack);
+            return
+        }
+        logger.debug('S3 upload - data: ' + resp);
+    });
 }
 
 bot.arr_remove = function(array, element) {
@@ -191,6 +216,10 @@ bot.on('message', function (user, userID, channelID, message, evt) {
         }
 
         args = args.splice(1);
+        if (inconsistent) {
+            logger.info('Got command ' + message ' but download is not done yet.');
+            return
+        }
         switch(cmd) {
             case 'create':
                 var mode = 'open';

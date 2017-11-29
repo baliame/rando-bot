@@ -5,6 +5,7 @@
   "main": "bot.js",
   "author": "Baliame",
   "dependencies": {
+    "aws-sdk": "^2.158.0",
     "discord.io": "^2.5.3",
     "http": "0.0.0",
     "winston": "^2.4.0"
