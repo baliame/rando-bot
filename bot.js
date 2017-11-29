@@ -71,7 +71,7 @@ bot.saveRaces = function() {
         Key: bucket_key,
         Body: data,
     }
-    S3.putObject(params, function(err, resp) {
+    s3.putObject(params, function(err, resp) {
         if (err) {
             logger.error('S3 upload - error: ' + err + ' stack: ' + err.stack);
             return
