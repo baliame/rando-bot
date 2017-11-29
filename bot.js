@@ -19,7 +19,11 @@ var bot = new Discord.Client({
    autorun: true
 });
 
-bot.races = {latest: {}, finished: [], all_by_hash: {}, in_race: {}};
+bot.addServer = function(serverID) {
+    bot.races[serverID] = {latest: {}, finished: [], all_by_hash: {}, in_race: {}};
+}
+
+bot.races = {};
 
 bot.loadRaces = function() {
     try {
@@ -181,6 +185,10 @@ bot.on('message', function (user, userID, channelID, message, evt) {
     if (message.substring(0, 1) == '.') {
         var args = message.substring(1).split(' ');
         var cmd = args[0];
+        var serverID = bot.channels[channelID].guild_id;
+        if (!(serverID in bot.races)) {
+            bot.addServer(serverID);
+        }
 
         args = args.splice(1);
         switch(cmd) {
@@ -188,7 +196,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 var mode = 'open';
                 var difficulty = 'normal';
 
-                if (target in bot.races.latest) {
+                if (target in bot.races[serverID].latest) {
                     if (race.status == 'starting' || race.status == 'in-progress') {
                         bot.sendError(channelID, userID, "You already have an ongoing race! Use .cancel to clear it.");
                         return;
@@ -236,7 +244,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         resp = JSON.parse(buffer);
                         bot.sendTagged(channelID, userID, 'whipped up a(n) ' + difficulty + ' ' + mode + ' randomizer seed at http://vt.alttp.run/h/' + resp["hash"] + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
 
-                        bot.races.latest[user.toLowerCase()] = {
+                        bot.races[serverID].latest[user.toLowerCase()] = {
                             initiator: user.toLowerCase(),
                             hash: resp["hash"],
                             difficulty: difficulty,
@@ -249,7 +257,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                             forfeits: {},
                             userids: {},
                         }
-                        bot.races.all_by_hash[resp["hash"]] = bot.races.latest[user.toLowerCase()];
+                        bot.races[serverID].all_by_hash[resp["hash"]] = bot.races[serverID].latest[user.toLowerCase()];
                         bot.saveRaces();
                     });
                 });
@@ -269,11 +277,11 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 var race;
                 if (args.length > 0) {
                     target = args[0].toLowerCase();
-                    if (!(target in bot.races.latest)) {
+                    if (!(target in bot.races[serverID].latest)) {
                         bot.sendError(channelID, userID, 'User ' + target + ' has no active randomizer race.');
                         return;
                     } else {
-                        race = bot.races.latest[target];
+                        race = bot.races[serverID].latest[target];
                         logger.debug('From directed: ' + race);
                     }
                 } else {
@@ -310,7 +318,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     bot.sendError(channelID, userID, 'Hash must be provided.');
                     return;
                 }
-                var race = bot.races.all_by_hash[args[0]]
+                var race = bot.races[serverID].all_by_hash[args[0]]
                 if (race === undefined) {
                     bot.sendError(channelID, userID, 'Unknown hash: ' + args[0]);
                     return;
@@ -339,7 +347,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     bot.sendError(channelID, userID, 'Hash must be provided.');
                     return;
                 }
-                var race = bot.races.all_by_hash[args[0]]
+                var race = bot.races[serverID].all_by_hash[args[0]]
                 if (race === undefined) {
                     bot.sendError(channelID, userID, 'Unknown hash: ' + args[0]);
                     return;
@@ -374,20 +382,20 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
             case 'cancel':
                 var target = user.toLowerCase();
-                if (!(target in bot.races.latest)) {
+                if (!(target in bot.races[serverID].latest)) {
                     bot.sendError(channelID, userID, 'You have no race in progress!');
                     return;
                 }
 
-                race = bot.races.latest[target];
+                race = bot.races[serverID].latest[target];
                 if (race.status == 'starting' || race.status == 'in-progress') {
                     bot.sendTagged(channelID, userID, 'Your race has been cancelled :(');
                     race.status = 'cancelled';
                     bot.saveRaces();
 
                     for (var name in race.participants) {
-                        if (name in bot.races.in_race) {
-                            delete bot.races.in_race[name];
+                        if (name in bot.races[serverID].in_race) {
+                            delete bot.races[serverID].in_race[name];
                         }
                     }
                     return;
@@ -398,12 +406,12 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
             case 'start':
                 var target = user.toLowerCase();
-                if (!(target in bot.races.latest)) {
+                if (!(target in bot.races[serverID].latest)) {
                     bot.sendError(channelID, userID, 'You have no race awaiting a start!');
                     return;
                 }
 
-                race = bot.races.latest[target];
+                race = bot.races[serverID].latest[target];
                 if (race.status == 'starting') {
                     race.status = 'in-progress';
                     tags = []
@@ -441,19 +449,19 @@ bot.on('message', function (user, userID, channelID, message, evt) {
             break;
 
             case 'join':
-                if (user in bot.races.in_race) {
-                    bot.sendError(channelID, userID, 'You cannot join a race because you are already participating in race hash ' + bot.races.in_race[user] + ' - if this is an error, type .clean')
+                if (user in bot.races[serverID].in_race) {
+                    bot.sendError(channelID, userID, 'You cannot join a race because you are already participating in race hash ' + bot.races[serverID].in_race[user] + ' - if this is an error, type .clean')
                     return;
                 }
                 var target;
                 var race;
                 if (args.length > 0) {
                     target = args[0].toLowerCase();
-                    if (!(target in bot.races.latest) || bot.races.latest[target].status != 'starting') {
+                    if (!(target in bot.races[serverID].latest) || bot.races[serverID].latest[target].status != 'starting') {
                         bot.sendError(channelID, userID, 'User ' + target + ' has no starting randomizer race.');
                         return;
                     } else {
-                        race = bot.races.latest[target];
+                        race = bot.races[serverID].latest[target];
                         logger.debug('From directed: ' + race);
                     }
                 } else {
@@ -471,7 +479,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     race.participants.push(user);
                 }
                 race.userids[user] = userID;
-                bot.races.in_race[user] = race.hash;
+                bot.races[serverID].in_race[user] = race.hash;
                 bot.saveRaces();
 
                 logger.debug('Sending message')
@@ -482,12 +490,12 @@ bot.on('message', function (user, userID, channelID, message, evt) {
             break;
 
             case 'clean':
-                if (user in bot.races.in_race) {
-                    race = bot.races.all_by_hash[bot.races.in_race[user]];
+                if (user in bot.races[serverID].in_race) {
+                    race = bot.races[serverID].all_by_hash[bot.races[serverID].in_race[user]];
                     if (race !== undefined) {
                         bot.arr_remove(race.participants, user);
                     }
-                    delete bot.races.in_race[user];
+                    delete bot.races[serverID].in_race[user];
 
                     bot.sendTagged(channelID, userID, "You're good to go.");
                 } else {
@@ -497,28 +505,28 @@ bot.on('message', function (user, userID, channelID, message, evt) {
             break;
 
             case 'withdraw':
-                if (!(user in bot.races.in_race)) {
+                if (!(user in bot.races[serverID].in_race)) {
                     bot.sendError(channelID, userID, "You're not in a race.");
                     return;
                 }
-                race = bot.races.all_by_hash[bot.races.in_race[user]];
+                race = bot.races[serverID].all_by_hash[bot.races[serverID].in_race[user]];
                 if (race.status != 'starting') {
                     bot.sendError(channelID, userID, "You cannot withdraw from a race after it has started. Use .forfeit");
                     return;
                 }
                 bot.arr_remove(race.participants, user);
-                delete bot.races.in_race[user];
+                delete bot.races[serverID].in_race[user];
                 var participants = bot.getParticipants(race);
                 bot.sendTagged(channelID, userID, 'You withdrew from the race with the hash ' + race.hash + ' started by ' + race.initiator + '. Current participants: ' + participants)
                 bot.saveRaces();
             break;
 
             case 'forfeit':
-                if (!(user in bot.races.in_race)) {
+                if (!(user in bot.races[serverID].in_race)) {
                     bot.sendError(channelID, userID, "You're not in a race.");
                     return;
                 }
-                race = bot.races.all_by_hash[bot.races.in_race[user]];
+                race = bot.races[serverID].all_by_hash[bot.races[serverID].in_race[user]];
                 if (race.status == 'starting') {
                     bot.sendError(channelID, userID, "You cannot forfeit from a race before it has started. Use .withdraw");
                     return;
@@ -531,35 +539,35 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     to: channelID,
                     message: user + ' has forfeited from race hash ' + race.hash + ' at the time of ' + bot.niceTimeSince(race.started),
                 });
-                delete bot.races.in_race[user];
+                delete bot.races[serverID].in_race[user];
                 if (Object.keys(race.forfeits).length == race.participants.length) {
                     bot.sendMessage({
                         to: channelID,
                         message: 'All racers have forfeited from race hash ' + race.hash + ', race is finished.',
                     });
                     race.status = 'finished';
-                    delete bot.races.latest[race.initiator];
-                    bot.races.finished.push(race);
+                    delete bot.races[serverID].latest[race.initiator];
+                    bot.races[serverID].finished.push(race);
                 }
                 bot.saveRaces();
             break;
 
             case 'done':
-                if (!(user in bot.races.in_race)) {
+                if (!(user in bot.races[serverID].in_race)) {
                     bot.sendError(channelID, userID, "You're not in a race.");
                     return;
                 }
-                logger.debug('Looking for race hash ' + bot.races.in_race[user])
-                race = bot.races.all_by_hash[bot.races.in_race[user]];
+                logger.debug('Looking for race hash ' + bot.races[serverID].in_race[user])
+                race = bot.races[serverID].all_by_hash[bot.races[serverID].in_race[user]];
                 if (race === undefined) {
                     logger.error('Cannot find this race.')
-                    logger.error('Races: ' + bot.races.all_by_hash)
-                    for (var key in bot.races.all_by_hash) {
-                        logger.error('  Race hash ' + key + ' by ' + bot.races.all_by_hash[key].initiator);
+                    logger.error('Races: ' + bot.races[serverID].all_by_hash)
+                    for (var key in bot.races[serverID].all_by_hash) {
+                        logger.error('  Race hash ' + key + ' by ' + bot.races[serverID].all_by_hash[key].initiator);
                     }
-                    logger.error('Latest: ' + bot.races.latest)
-                    for (var key in bot.races.latest) {
-                        logger.error('  Race by ' + key + ': ' + bot.races.latest[key].hash);
+                    logger.error('Latest: ' + bot.races[serverID].latest)
+                    for (var key in bot.races[serverID].latest) {
+                        logger.error('  Race by ' + key + ': ' + bot.races[serverID].latest[key].hash);
                     }
                     return;
                 }
@@ -571,7 +579,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     return;
                 }
                 race.finished[user] = new Date().getTime();
-                delete bot.races.in_race[user];
+                delete bot.races[serverID].in_race[user];
                 bot.sendMessage({
                     to: channelID,
                     message: user + ' has finished the race hash ' + race.hash + ' at the time of ' + bot.niceTimeSince(race.started),
@@ -579,18 +587,18 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 if (race.status == 'in-progress') {
                     race.status = 'finished';
                     bot.sendTagged(channelID, userID, 'Congratulations, you are the first to finish!');
-                    delete bot.races.latest[race.initiator];
-                    bot.races.finished.push(race);
+                    delete bot.races[serverID].latest[race.initiator];
+                    bot.races[serverID].finished.push(race);
                 }
                 bot.saveRaces();
             break;
 
             case 'status':
-                if (!(user in bot.races.in_race)) {
+                if (!(user in bot.races[serverID].in_race)) {
                     bot.sendTagged(channelID, userID, "You're not in a race.");
                     return;
                 } else {
-                    bot.sendTagged(channelID, userID, "You're in race hash " + bot.races.in_race[user] + ".");
+                    bot.sendTagged(channelID, userID, "You're in race hash " + bot.races[serverID].in_race[user] + ".");
                     return
                 }
             break;
