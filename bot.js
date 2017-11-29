@@ -42,17 +42,20 @@ bot.loadRaces = function() {
         logger.debug('S3 GetObject callback.');
         if (err) {
             logger.error('S3 download - error: ' + err + ' stack: ' + err.stack);
+            inconsistent = false;
             return
         }
         logger.debug('S3 download - data: ' + data);
 
         bot.races = JSON.parse(data.Body);
-        bot.races.all_by_hash = {}
-        for (var key in bot.races.latest) {
-            bot.races.all_by_hash[bot.races.latest[key].hash] = bot.races.latest[key];
-        }
-        for (var i = 0; i < bot.races.finished.length; i++) {
-            bot.races.all_by_hash[bot.races.finished[i].hash] = bot.races.finished[i];
+        for (var server in bot.races) {
+            bot.races[server].all_by_hash = {}
+            for (var key in bot.races[server].latest) {
+                bot.races[server].all_by_hash[bot.races[server].latest[key].hash] = bot.races[server].latest[key];
+            }
+            for (var i = 0; i < bot.races[server].finished.length; i++) {
+                bot.races[server].all_by_hash[bot.races[server].finished[i].hash] = bot.races[server].finished[i];
+            }
         }
         inconsistent = false;
     });
