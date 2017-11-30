@@ -817,11 +817,11 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 var rolename = args.join(' ');
                 var role = bot.findRole(serverID, rolename);
                 if (role === null) {
-                    bot.sendError(channelID, userID, "I can't find that role!");
+                    bot.sendError(channelID, userID, "I can't find that role! (Role must exist before setting)");
                     return;
                 } else {
                     bot.races[serverID].pingrole = role;
-                    bot.sendTagged(channelID, userID, "Done.");
+                    bot.sendTagged(channelID, userID, "Ping role has been set to role " + rolename + " (ID: " + role + ")");
                 }
             break;
 
@@ -832,7 +832,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     return;
                 }
                 bot.races[serverID].pingrole = null;
-                bot.sendTagged(channelID, userID, "Done.");
+                bot.sendTagged(channelID, userID, "Ping role has been removed. Pinging will not occur until it is set again.");
             break;
 
             case 'grant':
@@ -850,7 +850,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         logger.error('addToRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.message);
                         bot.sendTagged(channelID, userID, "I don't appear to be able to grant/remove the pingrole.");
                     } else {
-                        bot.sendTagged(channelID, userID, "Done.");
+                        rolename = bot.servers[serverID].roles[bot.races[serverID].pingrole].name;
+                        bot.sendTagged(channelID, userID, "You have been granted the " + rolename + " role.");
                     }
                 });
             break;
@@ -870,7 +871,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         logger.error('removeFromRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.message);
                         bot.sendTagged(channelID, userID, "I don't appear to be able to grant/remove the pingrole.");
                     } else {
-                        bot.sendTagged(channelID, userID, "Done.");
+                        rolename = bot.servers[serverID].roles[bot.races[serverID].pingrole].name;
+                        bot.sendTagged(channelID, userID, "The " + rolename + " role has been removed from you.");
                     }
                 });
             break;
