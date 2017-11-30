@@ -844,7 +844,12 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     roleID: bot.races[serverID].pingrole
                 }, function(err, response) {
                     logger.debug('addToRole: ' + response + ' / err: ' + err);
-                    logger.error('addToRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.messae);
+                    if (err) {
+                        logger.error('addToRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.message);
+                        bot.sendTagged(channelID, userID, "I don't appear to be able to grant/remove the pingrole.");
+                    } else {
+                        bot.sendTagged(channelID, userID, "Done.");
+                    }
                 });
             break;
 
@@ -859,7 +864,12 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     roleID: bot.races[serverID].pingrole
                 }, function(err, response) {
                     logger.debug('removeFromRole: ' + response + ' / err: ' + err);
-                    logger.error('removeFromRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.messae);
+                    if (err) {
+                        logger.error('removeFromRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.message);
+                        bot.sendTagged(channelID, userID, "I don't appear to be able to grant/remove the pingrole.");
+                    } else {
+                        bot.sendTagged(channelID, userID, "Done.");
+                    }
                 });
             break;
 
