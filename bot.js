@@ -20,7 +20,7 @@ var bot = new Discord.Client({
 });
 
 bot.addServer = function(serverID) {
-    bot.races[serverID] = {latest: {}, finished: [], all_by_hash: {}, in_race: {}};
+    bot.races[serverID] = {latest: {}, finished: [], all_by_hash: {}, in_race: {}, user_data: {} };
 }
 
 var inconsistent = true;
@@ -288,6 +288,9 @@ bot.on('message', function (user, userID, channelID, message, evt) {
         if (!(serverID in bot.races)) {
             bot.addServer(serverID);
         }
+        if (bot.races[serverID].user_data === undefined) {
+            bot.races[serverID].user_data = {};
+        }
 
         args = args.splice(1);
         if (inconsistent) {
@@ -530,47 +533,54 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     race.started = new Date().getTime() + 15000;
                     bot.saveRaces();
 
-                    bot.sleep(5000);
-                    bot.sendMessage({
-                        to: channelID,
-                        message: 'Race starting in 10 seconds.',
-                    });
+                    setTimeout(function() {
+                        bot.sendMessage({
+                            to: channelID,
+                            message: 'Race starting in 10 seconds.',
+                        });
 
-                    bot.sleep(5000);
-                    bot.sendMessage({
-                        to: channelID,
-                        message: 'Race starting in 5 seconds.',
-                    });
+                        setTimeout(function() {
+                            bot.sendMessage({
+                                to: channelID,
+                                message: 'Race starting in 5 seconds.',
+                            });
 
-                    bot.sleep(1000);
-                    bot.sendMessage({
-                        to: channelID,
-                        message: '4...',
-                    });
+                            setTimeout(function() {
+                                bot.sendMessage({
+                                    to: channelID,
+                                    message: '4...',
+                                });
 
-                    bot.sleep(1000);
-                    bot.sendMessage({
-                        to: channelID,
-                        message: '3...',
-                    });
+                                setTimeout(function() {
+                                    bot.sendMessage({
+                                        to: channelID,
+                                        message: '3...',
+                                    });
 
-                    bot.sleep(1000);
-                    bot.sendMessage({
-                        to: channelID,
-                        message: '2...',
-                    });
+                                    setTimeout(function() {
+                                        bot.sendMessage({
+                                            to: channelID,
+                                            message: '2...',
+                                        });
 
-                    bot.sleep(1000);
-                    bot.sendMessage({
-                        to: channelID,
-                        message: '1...',
-                    });
+                                        setTimeout(function() {
+                                            bot.sendMessage({
+                                                to: channelID,
+                                                message: '1...',
+                                            });
 
-                    bot.sleep(1000);
-                    bot.sendMessage({
-                        to: channelID,
-                        message: tags.join(' ') + ' GO!',
-                    });
+                                            setTimeout(function() {
+                                                bot.sendMessage({
+                                                    to: channelID,
+                                                    message: tags.join(' ') + ' GO!',
+                                                });
+                                            }, 1000);
+                                        }, 1000);
+                                    }, 1000);
+                                }, 1000);
+                            }, 1000);
+                        }, 5000);
+                    }, 5000);
                     return;
                 }
 
