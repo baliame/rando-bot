@@ -812,7 +812,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     bot.sendError(channelID, userID, "I can't find that role!");
                     return;
                 } else {
-                    bot.races[serverID].pingrole = role.id;
+                    bot.races[serverID].pingrole = role;
                     bot.sendTagged(channelID, userID, "Done.");
                 }
             break;
@@ -895,7 +895,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 '.clean - Use this if the bot does not let you race. \n' +
                 'Server admin commands: \n' +
                 '.setpingrole - Set the rolename to ping when a new seed is created. \n' +
-                '.clearpingrole - Clear this rolename (do not ping)';
+                '.clearpingrole - Clear this rolename (do not ping).';
                 bot.sendTagged(channelID, userID, usage);
             break;
          }
