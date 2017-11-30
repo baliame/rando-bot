@@ -832,6 +832,38 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 bot.sendTagged(channelID, userID, "Done.");
             break;
 
+            case 'grant':
+                if (bot.races[serverID].pingrole === null || bot.races[serverID].pingrole === undefined) {
+                    bot.sendError(channelID, userID, "I'm not configured with a role to hand out on this server.");
+                    return;
+                }
+                var userobj = bot.users[userID].addToRole({
+                    serverID: serverID,
+                    userID: userID,
+                    roleID: bot.races[serverID].pingrole
+                }, function(err, response) {
+                    logger.debug('addToRole: ' + response + ' / err: ' + err);
+                });
+            break;
+
+            case 'ungrant':
+                if (bot.races[serverID].pingrole === null || bot.races[serverID].pingrole === undefined) {
+                    bot.sendError(channelID, userID, "I'm not configured with a role to hand out on this server.");
+                    return;
+                }
+                var userobj = bot.users[userID].removeFromRole({
+                    serverID: serverID,
+                    userID: userID,
+                    roleID: bot.races[serverID].pingrole
+                }, function(err, response) {
+                    logger.debug('removeFromRole: ' + response + ' / err: ' + err);
+                });
+            break;
+
+            case 'ping':
+                bot.sendTagged(channelID, userID, 'Pong.');
+            break;
+
             case 'debug':
                 if (String(userID) == "185071875506962433") {
                     if (args.length == 0) {
@@ -897,6 +929,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 '.done - Mark your race finished and record your completion time. \n' +
                 '.forfeit - Forfeit your current race. \n' +
                 '.status - Show your current status. \n' +
+                '.grant - Add yourself to the ping role. Server admin must set a ping role and grant the bot role permissions for this to work. \n' +
+                '.ungrant - Remove yourself from the ping role. Server admin must set a ping role and grant the bot role permissions for this to work. \n' +
                 '.clean - Use this if the bot does not let you race. \n' +
                 'Server admin commands: \n' +
                 '.setpingrole - Set the rolename to ping when a new seed is created. \n' +
