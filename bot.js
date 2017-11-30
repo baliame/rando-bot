@@ -521,6 +521,10 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
                 race = bot.races[serverID].latest[target];
                 if (race.status == 'starting') {
+                    if (race.participants.length == 0) {
+                        bot.sendError(channelID, userID, "You can't start an empty race!");
+                        return;
+                    }
                     race.status = 'in-progress';
                     tags = []
                     for (var racer in race.userids) {
@@ -771,6 +775,11 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         bot.saveRacesBackup('manual_backup.json');
                     } else if (args[0] == 'loadbackup') {
                         bot.loadRacesBackup('manual_backup.json');
+                    } else if (args[0] == 'say') {
+                        bot.sendMessage({
+                            'to': channelID,
+                            'message': args.join(' '),
+                        });
                     }
                     bot.saveRaces();
                     bot.sendTagged(channelID, userID, "Done.");
