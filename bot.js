@@ -844,7 +844,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     roleID: bot.races[serverID].pingrole
                 }, function(err, response) {
                     logger.debug('addToRole: ' + response + ' / err: ' + err);
-                    logger.error('addToRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + Object.keys(err.response));
+                    logger.error('addToRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.messae);
                 });
             break;
 
@@ -859,7 +859,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     roleID: bot.races[serverID].pingrole
                 }, function(err, response) {
                     logger.debug('removeFromRole: ' + response + ' / err: ' + err);
-                    logger.error('removeFromRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + Object.keys(err.response));
+                    logger.error('removeFromRole failed: ' + err.statusCode + ' '  + err.statusMessage + ' ' + err.response.code + ' ' + err.response.messae);
                 });
             break;
 
