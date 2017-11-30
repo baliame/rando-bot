@@ -63,6 +63,40 @@ bot.loadRaces = function() {
             }
         }
         inconsistent = false;
+        bot.saveRacesBackup('latest_loaded.json');
+        bot.saveRaces();
+    });
+    logger.debug('Request: ' + req);
+}
+
+bot.loadRacesBackup = function(bkey) {
+    inconsistent = true;
+    logger.debug('Starting race load.');
+    var params = {
+        Bucket: bucket,
+        Key: bkey,
+    };
+    logger.debug('Initiating S3 connection.');
+    req = s3.getObject(params, function(err, data) {
+        logger.debug('S3 GetObject callback.');
+        if (err) {
+            logger.error('S3 download - error: ' + err + ' stack: ' + err.stack);
+            inconsistent = false;
+            return
+        }
+        logger.debug('S3 download - data: ' + data);
+
+        bot.races = JSON.parse(data.Body);
+        for (var server in bot.races) {
+            bot.races[server].all_by_hash = {}
+            for (var key in bot.races[server].latest) {
+                bot.races[server].all_by_hash[bot.races[server].latest[key].hash] = bot.races[server].latest[key];
+            }
+            for (var i = 0; i < bot.races[server].finished.length; i++) {
+                bot.races[server].all_by_hash[bot.races[server].finished[i].hash] = bot.races[server].finished[i];
+            }
+        }
+        inconsistent = false;
         bot.saveRaces();
     });
     logger.debug('Request: ' + req);
@@ -75,6 +109,22 @@ bot.saveRaces = function() {
     var params = {
         Bucket: bucket,
         Key: bucket_key,
+        Body: data,
+    }
+    s3.putObject(params, function(err, resp) {
+        if (err) {
+            logger.error('S3 upload - error: ' + err + ' stack: ' + err.stack);
+            return
+        }
+        logger.debug('S3 upload - data: ' + resp);
+    });
+}
+
+bot.saveRacesBackup = function(bkey) {
+    var data = JSON.stringify(bot.races)
+    var params = {
+        Bucket: bucket,
+        Key: bkey,
         Body: data,
     }
     s3.putObject(params, function(err, resp) {
@@ -218,6 +268,17 @@ bot.findWinner = function(race) {
 bot.niceTimeSince = function(start) {
     return bot.niceTimeDiff(start, new Date().getTime());
 }
+
+bot.backupProc = function() {
+    logger.debug('Starting 10 minute timer for auto-backup');
+    setTimeout(function() {
+        logger.debug('Executing auto-backup.');
+        bot.saveRacesBackup('auto_backup-' + new Date().toISOString() + '.json');
+        bot.backupProc();
+    }, 10 * 60 * 100);
+}
+
+backupProc();
 
 bot.on('message', function (user, userID, channelID, message, evt) {
     if (message.substring(0, 1) == '.') {
@@ -668,6 +729,40 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 } else {
                     bot.sendTagged(channelID, userID, "You're in race hash " + bot.races[serverID].in_race[user] + ".");
                     return
+                }
+            break;
+
+            case 'debug':
+                if (user == "baliame") {
+                    if (args[1] == "resetserver") {
+                        bot.addServer(serverID);
+                    } else if (args[1] == "pushrace") {
+                        ts = new Date(String(args[6])).getTime()
+                        bot.races[serverID].latest[args[2]] = {
+                            initiator: args[2]
+                            hash: args[3],
+                            difficulty: args[4],
+                            mode: args[5],
+                            initiated: args[6],
+                            status: args[7],
+                            started: args[7] != 'starting' ? args[6] : 0,
+                            participants: args[8].split(','),
+                            finished: {},
+                            forfeits: {},
+                            userids: {},
+                        }
+                    } else if (args[1] == 'reload') {
+                        inconsistent = true;
+                        bot.loadRaces();
+                    } else if (args[1] == 'backup') {
+                        bot.saveRacesBackup('manual_backup.json');
+                    } else if (args[1] == 'loadbackup') {
+                        bot.loadRacesBackup('manual_backup.json');
+                    }
+                    bot.saveRaces();
+                    bot.sendTagged(channelID, userID, "Done.");
+                } else {
+                    bot.sendTagged(channelID, userID, "Excuse me, what are you doing?");
                 }
             break;
 
