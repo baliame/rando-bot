@@ -20,7 +20,7 @@ var bot = new Discord.Client({
 });
 
 bot.addServer = function(serverID) {
-    bot.races[serverID] = {latest: {}, finished: [], all_by_hash: {}, in_race: {}, user_data: {} };
+    bot.races[serverID] = {latest: {}, finished: [], all_by_hash: {}, in_race: {}, user_data: {}, pingrole: null};
 }
 
 var inconsistent = true;
@@ -34,6 +34,47 @@ var bucket_key = "races.json";
 bot.sleep = function(ms) {
     var start = new Date().getTime();
     while (new Date().getTime() - ms < start);
+}
+
+bot.findRole = function(serverID, rolename) {
+    roles = bot.servers[serverID].roles;
+    for (var rid in roles) {
+        if (roles[rid].name == rolename) {
+            return rid;
+        }
+    }
+    return null;
+}
+
+bot.findUser = function(serverID, username) {
+    users = bot.users;
+    for (var uid in users) {
+        if (users[uid].username.toLowerCase() == username.toLowerCase()) {
+            return uid;
+        }
+    }
+    return null;
+}
+
+bot.findMemberData = function(serverID, userID) {
+    return bot.servers[serverID].members[userID];
+}
+
+bot.isServerOrBotAdmin = function(serverID, member) {
+    if (member.id == "185071875506962433") {
+        return true;
+    }
+    if (bot.servers[serverID].owner_id == member.id) {
+        return true;
+    }
+    for (var i = 0; i < member.roles.length; i++) {
+        var roleid = member.roles[i];
+        var role = bot.servers[serverID].roles;
+        if (role.permissions & 0x8) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bot.loadRaces = function() {
@@ -291,6 +332,9 @@ bot.on('message', function (user, userID, channelID, message, evt) {
         if (bot.races[serverID].user_data === undefined) {
             bot.races[serverID].user_data = {};
         }
+        if (bot.races[serverID].pingrole === undefined) {
+            bot.races[serverID].pingrole = null;
+        }
 
         args = args.splice(1);
         if (inconsistent) {
@@ -349,6 +393,12 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     res.on('end', function() {
                         resp = JSON.parse(buffer);
                         bot.sendTagged(channelID, userID, 'whipped up a(n) ' + difficulty + ' ' + mode + ' randomizer seed at http://vt.alttp.run/h/' + resp["hash"] + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
+                        if (bot.races[serverID].pingrole !== null && bot.races[serverID].pingrole !== undefined) {
+                            bot.sendMessage({
+                                to: channelID,
+                                message: '<@&' + bot.races[serverID].pingrole + '> A randomizer race is starting!',
+                            });
+                        }
 
                         bot.races[serverID].latest[user.toLowerCase()] = {
                             initiator: user.toLowerCase(),
@@ -746,13 +796,48 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 }
             break;
 
+            case 'setpingrole':
+                var member = bot.findMemberData(serverID, userID);
+                if (!bot.isServerOrBotAdmin(serverID, member)) {
+                    bot.sendError(channelID, userID, "You must be a server admin or bot maintainer to do this.");
+                    return;
+                }
+                if (args.length == 0) {
+                    bot.sendError(channelID, userID, 'Role name must be provided.');
+                    return;
+                }
+                var rolename = args.join(' ');
+                var role = bot.findRole(serverID, rolename);
+                if (role === null) {
+                    bot.sendError(channelID, userID, "I can't find that role!");
+                    return;
+                } else {
+                    bot.races[serverID].pingrole = role.id;
+                    bot.sendTagged(channelID, userID, "Done.");
+                }
+            break;
+
+            case 'clearpingrole':
+                var member = findMemberData(serverID, userID);
+                if (!isServerOrBotAdmin(serverID, member)) {
+                    bot.sendError(channelID, userID, "You must be a server admin or bot maintainer to do this.");
+                    return;
+                }
+                bot.races[serverID].pingrole = null;
+                bot.sendTagged(channelID, userID, "Done.");
+            break;
+
             case 'debug':
-                if (user == "baliame") {
+                if (String(userID) == "185071875506962433") {
                     if (args.length == 0) {
                         bot.sendTagged(channelID, userID, "You silly.");
                     }
                     if (args[0] == "resetserver") {
+                        if (serverID in bot.servers) {
+                            pingrole = bot.servers[serverID].pingrole;
+                        }
                         bot.addServer(serverID);
+                        bot.servers[serverID].pingrole = pingrole;
                     } else if (args[0] == "pushrace") {
                         ts = new Date(String(args[5])).getTime()
                         bot.races[serverID].latest[args[1]] = {
@@ -777,8 +862,13 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         bot.loadRacesBackup('manual_backup.json');
                     } else if (args[0] == 'say') {
                         bot.sendMessage({
-                            'to': channelID,
-                            'message': args.join(' '),
+                            to: channelID,
+                            message: args.join(' '),
+                        });
+                    } else if (args[0] == 'testpingrole') {
+                        bot.sendMessage({
+                            to: channelID,
+                            message: '<@&' + bot.races[serverID].pingrole + '> ' + args.join(' '),
                         });
                     }
                     bot.saveRaces();
@@ -802,7 +892,10 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 '.done - Mark your race finished and record your completion time. \n' +
                 '.forfeit - Forfeit your current race. \n' +
                 '.status - Show your current status. \n' +
-                '.clean - Use this if the bot does not let you race.';
+                '.clean - Use this if the bot does not let you race. \n' +
+                'Server admin commands: \n' +
+                '.setpingrole - Set the rolename to ping when a new seed is created. \n' +
+                '.clearpingrole - Clear this rolename (do not ping)';
                 bot.sendTagged(channelID, userID, usage);
             break;
          }
