@@ -739,7 +739,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     } else if (args[1] == "pushrace") {
                         ts = new Date(String(args[6])).getTime()
                         bot.races[serverID].latest[args[2]] = {
-                            initiator: args[2]
+                            initiator: args[2],
                             hash: args[3],
                             difficulty: args[4],
                             mode: args[5],
