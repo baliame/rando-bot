@@ -909,8 +909,9 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                             message: '<@&' + bot.races[serverID].pingrole + '> ' + args.join(' '),
                         });
                     } else if (args[0] == 'version') {
-                        revision = subprocess.execSync('git show HEAD --oneline --quiet').toString().trim();
-                        bot.sendTagged(channelID, userID, "I'm running version " + revision);
+                        // revision = subprocess.execSync('git show HEAD --oneline --quiet').toString().trim();
+                        // bot.sendTagged(channelID, userID, "I'm running version " + revision);
+                        bot.sendTagged(channelID, userID, "todo");
                     }
                     bot.saveRaces();
                     bot.sendTagged(channelID, userID, "Done.");
