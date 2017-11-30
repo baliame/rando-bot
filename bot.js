@@ -19,6 +19,11 @@ var bot = new Discord.Client({
    autorun: true
 });
 
+bot.on('disconnect', function(errMsg, code) {
+    logger.error('Bot disconnected with code ' + code + ': ' + errMsg);
+    bot.connect();
+});
+
 bot.addServer = function(serverID) {
     bot.races[serverID] = {latest: {}, finished: [], all_by_hash: {}, in_race: {}, user_data: {}, pingrole: null};
 }
