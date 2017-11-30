@@ -275,7 +275,7 @@ bot.backupProc = function() {
         logger.debug('Executing auto-backup.');
         bot.saveRacesBackup('auto_backup-' + new Date().toISOString() + '.json');
         bot.backupProc();
-    }, 10 * 60 * 100);
+    }, 10 * 60 * 1000);
 }
 
 bot.backupProc();
@@ -734,29 +734,32 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
             case 'debug':
                 if (user == "baliame") {
-                    if (args[1] == "resetserver") {
+                    if (args.length == 0) {
+                        bot.sendTagged(channelID, userID, "You silly.");
+                    }
+                    if (args[0] == "resetserver") {
                         bot.addServer(serverID);
-                    } else if (args[1] == "pushrace") {
-                        ts = new Date(String(args[6])).getTime()
-                        bot.races[serverID].latest[args[2]] = {
-                            initiator: args[2],
-                            hash: args[3],
-                            difficulty: args[4],
-                            mode: args[5],
-                            initiated: args[6],
-                            status: args[7],
-                            started: args[7] != 'starting' ? args[6] : 0,
-                            participants: args[8].split(','),
+                    } else if (args[0] == "pushrace") {
+                        ts = new Date(String(args[5])).getTime()
+                        bot.races[serverID].latest[args[1]] = {
+                            initiator: args[1],
+                            hash: args[2],
+                            difficulty: args[3],
+                            mode: args[4],
+                            initiated: args[5],
+                            status: args[6],
+                            started: args[6] != 'starting' ? args[5] : 0,
+                            participants: args[7].split(','),
                             finished: {},
                             forfeits: {},
                             userids: {},
                         }
-                    } else if (args[1] == 'reload') {
+                    } else if (args[0] == 'reload') {
                         inconsistent = true;
                         bot.loadRaces();
-                    } else if (args[1] == 'backup') {
+                    } else if (args[0] == 'backup') {
                         bot.saveRacesBackup('manual_backup.json');
-                    } else if (args[1] == 'loadbackup') {
+                    } else if (args[0] == 'loadbackup') {
                         bot.loadRacesBackup('manual_backup.json');
                     }
                     bot.saveRaces();
