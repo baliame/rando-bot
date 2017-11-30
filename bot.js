@@ -63,6 +63,7 @@ bot.loadRaces = function() {
             }
         }
         inconsistent = false;
+        bot.saveRaces();
     });
     logger.debug('Request: ' + req);
 }
@@ -84,8 +85,6 @@ bot.saveRaces = function() {
         logger.debug('S3 upload - data: ' + resp);
     });
 }
-
-bot.saveRaces();
 
 bot.arr_remove = function(array, element) {
     const index = array.indexOf(element);
