@@ -44,7 +44,9 @@ bot.sleep = function(ms) {
 
 bot.findRole = function(serverID, rolename) {
     roles = bot.servers[serverID].roles;
+    logger.debug('Finding role name "' + rolename + '"');
     for (var rid in roles) {
+        logger.debug('Checking role ' + roles[rid].name);
         if (roles[rid].name == rolename) {
             return rid;
         }
