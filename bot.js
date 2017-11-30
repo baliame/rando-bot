@@ -838,7 +838,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     bot.sendError(channelID, userID, "I'm not configured with a role to hand out on this server.");
                     return;
                 }
-                var userobj = bot.users[userID].addToRole({
+                bot.addToRole({
                     serverID: serverID,
                     userID: userID,
                     roleID: bot.races[serverID].pingrole
@@ -852,7 +852,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     bot.sendError(channelID, userID, "I'm not configured with a role to hand out on this server.");
                     return;
                 }
-                var userobj = bot.users[userID].removeFromRole({
+                bot.removeFromRole({
                     serverID: serverID,
                     userID: userID,
                     roleID: bot.races[serverID].pingrole
