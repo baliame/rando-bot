@@ -31,6 +31,11 @@ var bucket = "rando-bot";
 var bucket_key = "races.json";
 
 
+bot.sleep = function(ms) {
+    var start = new Date().getTime();
+    while (new Date().getTime() - ms < start);
+}
+
 bot.loadRaces = function() {
     logger.debug('Starting race load.');
     var params = {
@@ -464,24 +469,48 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     });
                     race.started = new Date().getTime() + 15000;
                     bot.saveRaces();
-                    setTimeout(function() {
-                        bot.sendMessage({
-                            to: channelID,
-                            message: 'Race starting in 10 seconds.',
-                        });
-                        setTimeout(function() {
-                            bot.sendMessage({
-                                to: channelID,
-                                message: 'Race starting in 5 seconds.',
-                            });
-                            setTimeout(function() {
-                                bot.sendMessage({
-                                    to: channelID,
-                                    message: tags.join(' ') + ' GO!',
-                                });
-                            }, 5000);
-                        }, 5000);
-                    }, 5000);
+
+                    bot.sleep(5000);
+                    bot.sendMessage({
+                        to: channelID,
+                        message: 'Race starting in 10 seconds.',
+                    });
+
+                    bot.sleep(5000);
+                    bot.sendMessage({
+                        to: channelID,
+                        message: 'Race starting in 5 seconds.',
+                    });
+
+                    bot.sleep(1000);
+                    bot.sendMessage({
+                        to: channelID,
+                        message: '4...',
+                    });
+
+                    bot.sleep(1000);
+                    bot.sendMessage({
+                        to: channelID,
+                        message: '3...',
+                    });
+
+                    bot.sleep(1000);
+                    bot.sendMessage({
+                        to: channelID,
+                        message: '2...',
+                    });
+
+                    bot.sleep(1000);
+                    bot.sendMessage({
+                        to: channelID,
+                        message: '1...',
+                    });
+
+                    bot.sleep(1000);
+                    bot.sendMessage({
+                        to: channelID,
+                        message: tags.join(' ') + ' GO!',
+                    });
                     return;
                 }
 
