@@ -2,6 +2,7 @@ var Discord = require('discord.io');
 var logger = require('winston');
 var http = require('http');
 var AWS = require('aws-sdk');
+var subprocess = require('child_process')
 // Configure logger settings
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {
@@ -907,6 +908,9 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                             to: channelID,
                             message: '<@&' + bot.races[serverID].pingrole + '> ' + args.join(' '),
                         });
+                    } else if (args[0] == 'version') {
+                        revision = subprocess.execSync('git show HEAD --oneline --quiet').toString().trim();
+                        bot.sendTagged(channelID, userID, "I'm running version " + revision);
                     }
                     bot.saveRaces();
                     bot.sendTagged(channelID, userID, "Done.");
