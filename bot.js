@@ -278,7 +278,7 @@ bot.backupProc = function() {
     }, 10 * 60 * 100);
 }
 
-backupProc();
+bot.backupProc();
 
 bot.on('message', function (user, userID, channelID, message, evt) {
     if (message.substring(0, 1) == '.') {
