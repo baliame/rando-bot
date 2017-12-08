@@ -255,7 +255,7 @@ bot.removeUserData = function(serverID, username, hash) {
 bot.rebuildUserData = function(serverID) {
     for (var hash in all_by_hash) {
         var data = all_by_hash[hash];
-        if data.status != 'cancelled' {
+        if (data.status != 'cancelled') {
             for (var i = 0; i < data.participants.length; i++) {
                 name = data.participants[i]
                 bot.insertUserData(serverID, data.participants[i], hash)
