@@ -253,8 +253,9 @@ bot.removeUserData = function(serverID, username, hash) {
 }
 
 bot.rebuildUserData = function(serverID) {
-    for (var hash in all_by_hash) {
-        var data = all_by_hash[hash];
+    bot.races[serverID].userdata = {};
+    for (var hash in bot.races[serverID].all_by_hash) {
+        var data = bot.races[serverID].all_by_hash[hash];
         if (data.status != 'cancelled') {
             for (var i = 0; i < data.participants.length; i++) {
                 name = data.participants[i]
@@ -332,7 +333,9 @@ bot.loadRaces = function() {
             for (var i = 0; i < bot.races[server].finished.length; i++) {
                 bot.races[server].all_by_hash[bot.races[server].finished[i].hash] = bot.races[server].finished[i];
             }
+            bot.rebuildUserData(server);
         }
+
         inconsistent = false;
         bot.saveRacesBackup('latest_loaded.json');
         bot.saveRaces();
@@ -366,6 +369,7 @@ bot.loadRacesBackup = function(bkey) {
             for (var i = 0; i < bot.races[server].finished.length; i++) {
                 bot.races[server].all_by_hash[bot.races[server].finished[i].hash] = bot.races[server].finished[i];
             }
+            bot.rebuildUserData(server);
         }
         inconsistent = false;
         bot.saveRaces();
