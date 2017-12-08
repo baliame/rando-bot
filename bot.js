@@ -164,7 +164,7 @@ bot.getUserStats = function(serverID, username) {
         username: username,
         races: [],
         cache: {
-            username: user.username,
+            username: username,
             total_time: 0,
             average_time: 0,
             forfeit_times: 0,
@@ -238,7 +238,7 @@ bot.removeUserData = function(serverID, username, hash) {
         username: username,
         races: [],
         cache: {
-            username: user.username,
+            username: username,
             total_time: 0,
             average_time: 0,
             winscore: 0,
