@@ -162,7 +162,7 @@ bot.getUserStats = function(serverID, username) {
     }
     bot.races[serverID].user_data[username] = {
         username: username,
-        races: []
+        races: [],
         cache: {
             username: user.username,
             total_time: 0,
