@@ -1272,109 +1272,109 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         switch(helpcmd) {
                             case '.help':
                             case 'help':
-                                'You already appear to know how to use it.';
+                                usage = 'You already appear to know how to use it.';
                                 break;
                             case '.debug':
                             case 'debug':
-                                'Well, *someone* is asking too many questions.';
+                                usage = 'Well, *someone* is asking too many questions.';
                                 break;
                             case '.create':
                             case 'create':
-                                'Syntax: .create <mode> <difficulty>\n' +
+                                usage = 'Syntax: .create <mode> <difficulty>\n' +
                                 'Creates a new seed and notifies the pingrole if configured. This begins preparations for a new race.\n' +
                                 'You must join your own seed with .join - by default, you are not a participant in the race!\n' +
                                 'Mode and difficulty parameters are not required, if not provided, they will default to open and normal respectively.';
                                 break;
                             case '.join':
                             case 'join':
-                                'Syntax: .join <name>\n' +
+                                usage = 'Syntax: .join <name>\n' +
                                 'Use this to enter as a participant in a race. You need to do this in order to have your race timed\n' +
                                 'and your statistics saved! If you provide a name explicitly, you will attempt to join the race initiated\n' +
                                 'by that user. Otherwise, you will join the last created race that has not been started yet, if available.';
                                 break;
                             case '.withdraw':
                             case 'withdraw':
-                                'Syntax: .withdraw\n' +
+                                usage = 'Syntax: .withdraw\n' +
                                 'Withdraws your participation in a race. You do not gain a statistics penalty for withdrawing.\n' +
                                 'This command only has an effect if you are a participant in a race that has not started yet.';
                                 break;
                             case '.start':
                             case 'start':
-                                'Syntax: .start\n' +
+                                usage = 'Syntax: .start\n' +
                                 'Starts the race that you created. At least one participant must be in the race to do this.\n' +
                                 'Starting a race creates a 15 seconds countdown. The timer starts when the GO! message appears.\n' +
                                 'All racers will be pinged several times. Once the countdown has started, it cannot be stopped (yet).';
                                 break;
                             case '.cancel':
                             case 'cancel':
-                                'Syntax: .cancel\n' +
+                                usage = 'Syntax: .cancel\n' +
                                 'Cancels the race under your name. Races can only be cancelled before they are finished.';
                                 break;
                             case '.forfeit':
                             case 'forfeit':
-                                'Syntax: .forfeit\n' +
+                                usage = 'Syntax: .forfeit\n' +
                                 'Removes you from the running race and notes your forfeit time. This will apply a penalty to your statistics.\n' +
                                 'In races running for longer than 24 hours, all runners who have not completed it will be considered forfeit.\n' +
                                 'Races are marked completed if all participants forfeited or if someone finished the race.';
                                 break;
                             case '.done':
                             case 'done':
-                                'Syntax: .done\n' +
+                                usage = 'Syntax: .done\n' +
                                 'Marks that you have completed the running race and notes your completion time and rank.\n' +
                                 'Races are marked completed if all participants forfeited or if someone finished the race.';
                                 break;
                             case '.grant':
                             case 'grant':
-                                'Syntax: .grant\n' +
+                                usage = 'Syntax: .grant\n' +
                                 'Makes the bot grant you the configured role so that you can see pings for races started through the bot.\n' +
                                 'Requires that the bot is configured with a role name and an role with permissions for handouts.';
                                 break;
                             case '.ungrant':
                             case 'ungrant':
-                                'Syntax: .ungrant\n' +
+                                usage = 'Syntax: .ungrant\n' +
                                 'Removes the configured role from you, so you will no longer see pings for races started through the bot.\n' +
                                 'Requires that the bot is configured with a role name and an role with permissions for handouts.';
                                 break;
                             case '.get':
                             case 'get':
-                                'Syntax: .get <user>\n' +
+                                usage = 'Syntax: .get <user>\n' +
                                 'Shows details about an uncompleted race that is tied to the user name. If the name is not provided,\n' +
                                 'the last created uncompleted race data will be shown. To show data about completed races, use .show.';
                                 break;
                             case '.getbyhash':
                             case 'getbyhash':
-                                'Syntax: .getbyhash <hash>\n' +
+                                usage = 'Syntax: .getbyhash <hash>\n' +
                                 'Retrieves race data by seed hash. Unlike .get, this will show completed races as well.\n' +
                                 'The race hash can be seen in most messages related to the race as well as the seed filename.';
                                 break;
                             case '.show':
                             case 'show':
-                                'Syntax: .show <hash>\n' +
+                                usage = 'Syntax: .show <hash>\n' +
                                 'Show the results of a completed race. Cannot be used for starting, in progress or cancelled races.\n' +
                                 'Races are marked completed if all participants forfeited or if someone finished the race.';
                                 break;
                             case '.status':
                             case 'status':
-                                'Syntax: .status\n' +
+                                usage = 'Syntax: .status\n' +
                                 'Shows your current status - race participation - according to the bot.\n' +
                                 'If you think this is incorrect, you can use .clean to reset your status.';
                                 break;
                             case '.clean':
                             case 'clean':
-                                'Syntax: .clean\n' +
+                                usage = 'Syntax: .clean\n' +
                                 'Fixes your broken status, if it is indeed broken. May be necessary if the bot does not let you race.\n' +
                                 'Note that if you clean yourself while the bot considers you in a race, you will not be able to interact\n' +
                                 'with that race anymore and will receive a forfeit status after the time limit (24h).';
                                 break;
                             case '.user':
                             case 'user':
-                                'Syntax: .user <user>\n' +
+                                usage = 'Syntax: .user <user>\n' +
                                 'Shows combined user statistics about the named user on this server. If no name is provided, your own stats are shown.\n' +
                                 'Case-sensitive.';
                                 break;
                             case '.leaderboard':
                             case 'leaderboard':
-                                'Syntax: .leaderboard <type>\n' +
+                                usage = 'Syntax: .leaderboard <type>\n' +
                                 'Shows top 10 leaderboards for this server in the named category. Leaderboards only take races with at least 2 participants into account.\n' +
                                 'In the future, races will have a weight in the leaderboard that accounts for participant count and relative score.\n' +
                                 'Types/categories:\n' +
@@ -1385,7 +1385,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                                 break;
                             case '.setpingrole':
                             case 'setpingrole':
-                                'Syntax: .setpingrole <rolename>\n' +
+                                usage = 'Syntax: .setpingrole <rolename>\n' +
                                 'Configures the bot to ping a specifically named role whenever new races are starting.\n' +
                                 'The role must exist before configuring the bot.\n' +
                                 'If this configuration is set and the bot has a role that can hand out the pingrole, it can automatically\n' +
@@ -1394,7 +1394,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                                 break;
                             case '.clearpingrole':
                             case 'clearpingrole':
-                                'Syntax: .clearpingrole\n' +
+                                usage = 'Syntax: .clearpingrole\n' +
                                 'Unconfigures the ping role of the bot. The bot will not ping a role when a new race is started.\n' +
                                 'It will also no longer respond to .grant and .ungrant unless reconfigured with a role.\n' +
                                 '*Admin command*: This command can only be executed by server or bot administrators.';
