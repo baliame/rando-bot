@@ -1201,7 +1201,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     var total_played = bot.niceTimeDiff(0, stats.total_time);
                     var average_completion = bot.niceTimeDiff(0, stats.average_time);
                     var data = "Here's the statistics for " + target + ": \n" +
-                    'Total games: ' + stats.total_games + '      Games won: ' + stats.won_games + '     Forfeits' + stats.forfeits + '\n'
+                    'Total games: ' + stats.total_games + '      Games won: ' + stats.won_games + '     Forfeits: ' + stats.forfeits + '\n' +
                     'Total time played: ' + total_played + '\n' +
                     'Average seed completion time: ' + average_completion;
                     bot.sendTagged(channelID, userID, data);
