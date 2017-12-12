@@ -675,7 +675,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
                 var path = '/seed';
                 if (shuffle !== null) {
-                    shuffle = '/entrance/seed';
+                    path = '/entrance/seed';
                 }
                 var post_options = {
                     host: 'vt.alttp.run',
