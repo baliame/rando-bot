@@ -671,7 +671,7 @@ bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mod
                 forfeits: {},
                 userids: {},
             }
-            bot.races[serverID].all_by_hash[resp["hash"]] = bot.races[serverID].latest[user.toLowerCase()];
+            bot.races[serverID].all_by_hash[fnb] = bot.races[serverID].latest[user.toLowerCase()];
             bot.saveRaces();
         })
     });
