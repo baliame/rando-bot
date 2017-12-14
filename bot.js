@@ -416,19 +416,20 @@ bot.saveRacesBackup = function(bkey) {
 }
 
 bot.saveROM = function(local, bkey, cb) {
-    var contents = fs.readFileSync(local, 'binary');
-    var params = {
-        Bucket: rom_bucket,
-        Key: bkey,
-        Body: contents,
-    }
-    s3.putObject(params, function(err, resp) {
-        if (err) {
-            logger.error('S3 upload - error: ' + err + ' stack: ' + err.stack);
-            return
+    fs.readFile(local, function(err, contents) {
+        var params = {
+            Bucket: rom_bucket,
+            Key: bkey,
+            Body: contents,
         }
-        logger.debug('S3 upload - data: ' + resp);
-        cb();
+        s3.putObject(params, function(err, resp) {
+            if (err) {
+                logger.error('S3 upload - error: ' + err + ' stack: ' + err.stack);
+                return
+            }
+            logger.debug('S3 upload - data: ' + resp);
+            cb();
+        });
     });
 }
 
