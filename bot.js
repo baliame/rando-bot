@@ -632,7 +632,7 @@ bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mod
         pargs.push('--shuffle=' + shuffle);
     }
     options = {
-        args: pargs;
+        args: pargs
     }
     python.run('entrance_rando/EntranceRandomizer.py', options, function (err, res) {
         if (err) {
