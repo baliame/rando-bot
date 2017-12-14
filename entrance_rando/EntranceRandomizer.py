@@ -211,3 +211,4 @@ if __name__ == '__main__':
             seed = random.randint(0, 999999999)
     else:
         main(seed=args.seed, args=args)
+    sys.exit(0)
