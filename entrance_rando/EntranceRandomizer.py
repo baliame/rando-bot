@@ -157,6 +157,9 @@ if __name__ == '__main__':
                              Keys (and other dungeon items) are no longer restricted to
                              their dungeons, but can be anywhere
                              ''', action='store_true')
+    parser.add_argument('--silent', help='''\
+                             Stop printing stuff to STDERR, seriously, why.
+                             ''', action='store_true')
     parser.add_argument('--nodungeonitems', help='''\
                              Remove Maps and Compasses from Itempool, replacing them by
                              empty slots.

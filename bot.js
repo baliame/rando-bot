@@ -622,7 +622,7 @@ bot.describeSeedFromRace = function(race) {
 
 bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fn) {
     var sfn = 'shuffled-' + fn;
-    var pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode, '--out=' + sfn];
+    var pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode, '--out=' + sfn, '--silent'];
     if (['timed-race', 'timed-ohko', 'ohko'].indexOf(variation) >= 0) {
         pargs.push('--timer=' + variation);
     } else if (variation == 'key-sanity') {
