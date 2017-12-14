@@ -570,6 +570,36 @@ bot.backupProc = function() {
 
 bot.backupProc();
 
+bot.describeSeedFromInput = function(mode, difficulty, shuffle, variation) {
+    if (shuffle !== null) {
+        if (variation !== null) {
+            return shuffle + ' entrance shuffle ' + variation + ' ' + difficulty + ' ' + mode;
+        } else {
+            return shuffle + ' entrance shuffle ' + difficulty + ' ' + mode;
+        }
+    } else {
+        if (variation !== null) {
+            return variation + ' ' + difficulty + ' ' + mode;
+        } else {
+            return difficulty + ' ' + mode;
+        }
+    }
+}
+
+bot.describeSeedFromRace = function(race) {
+    var mode = race.mode;
+    var difficulty = race.difficulty;
+    var shuffle = null;
+    if ('shuffle' in race) {
+        shuffle = race.shuffle;
+    }
+    var variation = null;
+    if ('variation' in race) {
+        variation = race.variation;
+    }
+    return bot.describeSeedFromInput(mode, difficutly, shuffle, variation);
+}
+
 bot.on('message', function (user, userID, channelID, message, evt) {
     if (message.substring(0, 1) == '.') {
         var args = message.substring(1).split(' ');
@@ -594,6 +624,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
             case 'create':
                 var mode = 'open';
                 var difficulty = 'normal';
+                var shuffle = null;
+                var variation = null;
 
                 if (target in bot.races[serverID].latest) {
                     if (race.status == 'starting' || race.status == 'in-progress') {
@@ -602,21 +634,38 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     }
                 }
 
-                if (args.length > 0) {
-                    mode = args[0];
-                    if (args.length > 1) {
-                        difficulty = args[1];
+                for (var i = 0; i < args.length; i++) {
+                    var arg = args[i]
+                    if (['standard', 'open', 'swordless'].indexOf(arg) >= 0) {
+                        mode = arg;
+                    } else if (['easy', 'normal', 'hard', 'expert', 'insane'].indexOf(arg) >= 0) {
+                        difficulty = arg;
+                    } else if (['simple', 'restricted', 'full', 'madness', 'insanity'].indexOf(arg) >= 0) {
+                        shuffle = arg;
+                    } else if (['timed-race', 'timed-ohko', 'ohko', 'triforce-hunt', 'key-sanity', 'keysanity'].indexOf(arg) >= 0) {
+                        if (arg == 'keysanity') {
+                            arg = 'key-sanity';
+                        }
+                        variation = arg;
+                    } else {
+                        bot.sendError(channelID, userID, 'Unrecognized keyword: ' + arg + ' - check .help command create for all keywords.');
+                        return;
                     }
                 }
 
-                if (['standard', 'open', 'swordless'].indexOf(mode) < 0) {
-                    bot.sendError(channelID, userID, "Mode must be standard, open or swordless.");
-                    return;
-                }
-
-                if (['easy', 'normal', 'hard', 'expert', 'insane'].indexOf(difficulty) < 0) {
-                    bot.sendError(channelID, userID, "Difficulty must be easy, normal, hard, expert or insane.");
-                    return;
+                if (shuffle) {
+                    if (mode == 'standard') {
+                        bot.sendError(channelID, userID, 'Standard mode is not available for entrance shuffle.');
+                        return;
+                    }
+                    if (difficulty != 'normal') {
+                        bot.sendError(channelID, userID, 'Only normal difficulty is allowed for entrance shuffle.');
+                        return;
+                    }
+                    if (variation == 'ohko' || variation == 'key-sanity') {
+                        bot.sendError(channelID, userID, 'Keysanity and simple OHKO is not available for entrance shuffle.');
+                        return;
+                    }
                 }
 
                 bot.sendMessage({
@@ -624,9 +673,13 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     message: 'Creating a seed for you.'
                 });
 
+                var path = '/seed';
+                if (shuffle !== null) {
+                    path = '/entrance/seed';
+                }
                 var post_options = {
                     host: 'vt.alttp.run',
-                    path: '/seed',
+                    path: path,
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -641,7 +694,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     });
                     res.on('end', function() {
                         resp = JSON.parse(buffer);
-                        bot.sendTagged(channelID, userID, 'whipped up a(n) ' + difficulty + ' ' + mode + ' randomizer seed at http://vt.alttp.run/h/' + resp["hash"] + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
+                        bot.sendTagged(channelID, userID, 'whipped up a(n) ' + bot.describeSeedFromInput(mode, difficulty, shuffle, variation) + ' randomizer seed at http://vt.alttp.run/h/' + resp["hash"] + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
                         if (bot.races[serverID].pingrole !== null && bot.races[serverID].pingrole !== undefined) {
                             bot.sendMessage({
                                 to: channelID,
@@ -654,6 +707,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                             hash: resp["hash"],
                             difficulty: difficulty,
                             mode: mode,
+                            variation: variation,
+                            shuffle: shuffle,
                             initiated: new Date().getTime(),
                             status: 'starting',
                             started: 0,
@@ -670,7 +725,18 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 seed_description = {
                     mode: mode,
                     difficulty: difficulty,
+                    logic: 'NoMajorGlitches',
+                    variation: 'none',
+                    goal: 'ganon',
                     tournament: true,
+                }
+
+                if (variation !== null) {
+                    seed_description['variation'] = variation;
+                }
+
+                if (shuffle !== null) {
+                    seed_description['shuffle'] = shuffle;
                 }
 
                 post_req.write(JSON.stringify(seed_description));
@@ -715,7 +781,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
                 var participants = bot.getParticipants(race);
 
-                bot.sendTagged(channelID, userID, 'The race is a(n) ' + race.difficulty + ' ' + race.mode + ' seed available at http://vt.alttp.run/h/' + race.hash + '\n Race status: ' + status + '; Participants: ' + participants);
+                bot.sendTagged(channelID, userID, 'The race is a(n) ' + bot.describeSeedFromRace(race) + ' seed available at http://vt.alttp.run/h/' + race.hash + '\n Race status: ' + status + '; Participants: ' + participants);
             break;
 
             case 'getbyhash':
@@ -744,7 +810,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
                 var participants = bot.getParticipants(race);
 
-                bot.sendTagged(channelID, userID, 'The race is a(n) ' + race.difficulty + ' ' + race.mode + ' seed available at http://vt.alttp.run/h/' + race.hash + '\n Race status: ' + status + '; Participants: ' + participants);
+                bot.sendTagged(channelID, userID, 'The race is a(n) ' + bot.describeSeedFromRace(race) + ' seed available at http://vt.alttp.run/h/' + race.hash + '\n Race status: ' + status + '; Participants: ' + participants);
             break;
 
             case 'show':
@@ -1176,6 +1242,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         args.splice(0, 1);
                         var name = args.join(' ');
                         bot.sendTagged(channelID, userID, bot.getUserStats(serverID, user).score);
+                    } else if (args[0] == 'getpingrole') {
+                        bot.sendTagged(channelID, userID, 'Bot ping role ID is ' + bot.races[serverID].pingrole);
                     }
                     bot.saveRaces();
                     bot.sendTagged(channelID, userID, "Done.");
@@ -1282,10 +1350,15 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
                             case '.create':
                             case 'create':
-                                usage = '**Syntax**: .create <mode> <difficulty>\n' +
+                                usage = '**Syntax**: .create <Keywords...>\n' +
                                 'Creates a new seed and notifies the pingrole if configured. This begins preparations for a new race.\n' +
                                 'You must join your own seed with .join - by default, you are not a participant in the race!\n' +
-                                'Mode and difficulty parameters are not required, if not provided, they will default to open and normal respectively.';
+                                'You may add any number of keywords to modify the seed.\n'+
+                                'Available keywords for difficulty: easy, normal, hard, expert, insane\n'+
+                                'Available keywords for mode: standard, open, swordless\n'+
+                                'Available keywords for variation: timed-race, timed-ohko, ohko, triforce-hunt, keysanity\n'+
+                                'Available keywords for entrance shuffle: simple, restricted, full, madness, insanity\n'+
+                                'Default keywords: open normal';
                             break;
 
                             case '.join':
