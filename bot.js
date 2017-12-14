@@ -621,7 +621,8 @@ bot.describeSeedFromRace = function(race) {
 }
 
 bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fn) {
-    pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode];
+    var sfn = 'shuffled-' + fn;
+    var pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode, '--out=' + sfn];
     if (['timed-race', 'timed-ohko', 'ohko'].indexOf(variation) >= 0) {
         pargs.push('--timer=' + variation);
     } else if (variation == 'key-sanity') {
@@ -642,8 +643,8 @@ bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mod
             logger.error(err)
             return;
         }
-        bot.saveROM(fn, 'Generated/' + fn, function() {
-            var url = 'https://s3-eu-west-1.amazonaws.com/Generated/' + fn;
+        bot.saveROM(sfn, 'Generated/' + sfn, function() {
+            var url = 'https://s3-eu-west-1.amazonaws.com/Generated/' + sfn;
 
             bot.sendTagged(channelID, userID, 'whipped up a(n) ' + bot.describeSeedFromInput(mode, difficulty, shuffle, variation) + ' randomizer seed at ' + url + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
             if (bot.races[serverID].pingrole !== null && bot.races[serverID].pingrole !== undefined) {
