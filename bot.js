@@ -37,6 +37,7 @@ var inconsistent = true;
 bot.races = {};
 var s3 = new AWS.S3();
 var bucket = "rando-bot";
+var rom_bucket = "rando-bot-roms";
 var bucket_key = "races.json";
 
 
@@ -417,7 +418,7 @@ bot.saveRacesBackup = function(bkey) {
 bot.saveROM = function(local, bkey, cb) {
     var contents = fs.readFileSync(local, 'binary');
     var params = {
-        Bucket: bucket,
+        Bucket: rom_bucket,
         Key: bkey,
         Body: contents,
     }
@@ -645,8 +646,8 @@ bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mod
             logger.error(err)
             return;
         }
-        bot.saveROM(sfn, 'Generated/' + sfn, function() {
-            var url = 'https://s3-eu-west-1.amazonaws.com/Generated/' + sfn;
+        bot.saveROM(sfn, sfn, function() {
+            var url = 'https://s3-eu-west-1.amazonaws.com/rando-bot-roms/' + sfn;
 
             bot.sendTagged(channelID, userID, 'whipped up a(n) ' + bot.describeSeedFromInput(mode, difficulty, shuffle, variation) + ' randomizer seed at ' + url + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
             if (bot.races[serverID].pingrole !== null && bot.races[serverID].pingrole !== undefined) {
