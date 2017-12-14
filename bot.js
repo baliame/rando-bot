@@ -625,7 +625,7 @@ bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mod
     var fn = fnb + '.sfc';
     var sfnb = 'shuffled-' + fnb;
     var sfn = 'shuffled-' + fn;
-    var pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode, '--out=' + sfnb, '--silent'];
+    var pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode, '--out=' + sfnb, '--silent', '--shuffleganon'];
     if (['timed-race', 'timed-ohko', 'ohko'].indexOf(variation) >= 0) {
         pargs.push('--timer=' + variation);
     } else if (variation == 'key-sanity') {
