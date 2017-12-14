@@ -658,7 +658,7 @@ bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mod
 
             bot.races[serverID].latest[user.toLowerCase()] = {
                 initiator: user.toLowerCase(),
-                hash: resp["hash"],
+                hash: fnb,
                 difficulty: difficulty,
                 mode: mode,
                 variation: variation,
