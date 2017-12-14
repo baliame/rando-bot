@@ -1,3 +1,4 @@
 :repo:deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu xenial main
 :repo:deb-src http://ppa.launchpad.net/deadsnakes/ppa/ubuntu xenial main
 python3.6
+python3-tk
