@@ -8,6 +8,7 @@
     "aws-sdk": "^2.158.0",
     "discord.io": "Woor/discord.io#gateway_v6",
     "http": "0.0.0",
+    "python-shell": "^0.4.0",
     "winston": "^2.4.0"
   },
   "engines": {

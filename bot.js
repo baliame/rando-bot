@@ -3,6 +3,8 @@ var logger = require('winston');
 var http = require('http');
 var AWS = require('aws-sdk');
 var subprocess = require('child_process')
+var python = require('python-shell')
+var fs = require('fs')
 // Configure logger settings
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {
@@ -411,6 +413,23 @@ bot.saveRacesBackup = function(bkey) {
     });
 }
 
+bot.saveROM = function(local, bkey, cb) {
+    var contents = fs.readFileSync(local, 'binary');
+    var params = {
+        Bucker: bucket,
+        Key: bkey,
+        Body: contents,
+    }
+    s3.putObject(params, function(err, resp) {
+        if (err) {
+            logger.error('S3 upload - error: ' + err + ' stack: ' + err.stack);
+            return
+        }
+        logger.debug('S3 upload - data: ' + resp);
+        cb();
+    });
+}
+
 bot.arr_remove = function(array, element) {
     const index = array.indexOf(element);
     if (index !== -1) {
@@ -600,6 +619,59 @@ bot.describeSeedFromRace = function(race) {
     return bot.describeSeedFromInput(mode, difficutly, shuffle, variation);
 }
 
+bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fn) {
+    pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode];
+    if (['timed-race', 'timed-ohko', 'ohko'].indexOf(variation) >= 0) {
+        pargs.push('--timer=' + variation);
+    } else if (variation == 'key-sanity') {
+        pargs.push('--keysanity');
+    } else if (variation == 'triforce-hunt') {
+        pargs.push('--goal=triforcehunt');
+    }
+    if (shuffle != null ){
+        pargs.push('--shuffle=' + shuffle);
+    }
+    options = {
+        args: pargs;
+    }
+    python.run('entrance_rando/EntranceRandomizer.py', options, function (err, res) {
+        if (err) {
+            bot.sendError(channelID, userID, 'Seed generation failed. Please notify a dev.');
+            logger.error(err)
+            return;
+        }
+        bot.saveROM(fn, 'Generated/' + fn, function() {
+            var url = 'https://s3-eu-west-1.amazonaws.com/Generated/' + fn;
+
+            bot.sendTagged(channelID, userID, 'whipped up a(n) ' + bot.describeSeedFromInput(mode, difficulty, shuffle, variation) + ' randomizer seed at ' + url + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
+            if (bot.races[serverID].pingrole !== null && bot.races[serverID].pingrole !== undefined) {
+                bot.sendMessage({
+                    to: channelID,
+                    message: '<@&' + bot.races[serverID].pingrole + '> A randomizer race is starting!',
+                });
+            }
+
+            bot.races[serverID].latest[user.toLowerCase()] = {
+                initiator: user.toLowerCase(),
+                hash: resp["hash"],
+                difficulty: difficulty,
+                mode: mode,
+                variation: variation,
+                shuffle: shuffle,
+                initiated: new Date().getTime(),
+                status: 'starting',
+                started: 0,
+                participants: [],
+                finished: {},
+                forfeits: {},
+                userids: {},
+            }
+            bot.races[serverID].all_by_hash[resp["hash"]] = bot.races[serverID].latest[user.toLowerCase()];
+            bot.saveRaces();
+        })
+    });
+}
+
 bot.on('message', function (user, userID, channelID, message, evt) {
     if (message.substring(0, 1) == '.') {
         var args = message.substring(1).split(' ');
@@ -614,6 +686,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
         if (bot.races[serverID].pingrole === undefined) {
             bot.races[serverID].pingrole = null;
         }
+        var use_local = false
 
         args = args.splice(1);
         if (inconsistent) {
@@ -663,8 +736,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         return;
                     }
                     if (variation == 'ohko' || variation == 'key-sanity') {
-                        bot.sendError(channelID, userID, 'Keysanity and simple OHKO is not available for entrance shuffle.');
-                        return;
+                        use_local = true
+                        bot.sendTagged(channelID, userID, 'NOTICE: VT rom is not available for this combination. The ROM is distributed via S3 and is retained for 3 days. This operation may take longer.');
                     }
                 }
 
@@ -673,74 +746,88 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     message: 'Creating a seed for you.'
                 });
 
-                var path = '/seed';
-                if (shuffle !== null) {
-                    path = '/entrance/seed';
-                }
-                var post_options = {
-                    host: 'vt.alttp.run',
-                    path: path,
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+                if (!use_local) {
+                    var path = '/seed';
+                    if (shuffle !== null) {
+                        path = '/entrance/seed';
                     }
-                };
+                    var post_options = {
+                        host: 'vt.alttp.run',
+                        path: path,
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    };
 
-                var post_req = http.request(post_options, function(res) {
-                    res.setEncoding('utf8');
-                    buffer = ""
-                    res.on('data', function (chunk) {
-                        buffer += chunk;
+                    var post_req = http.request(post_options, function(res) {
+                        res.setEncoding('utf8');
+                        buffer = ""
+                        res.on('data', function (chunk) {
+                            buffer += chunk;
+                        });
+                        res.on('end', function() {
+                            resp = JSON.parse(buffer);
+                            bot.sendTagged(channelID, userID, 'whipped up a(n) ' + bot.describeSeedFromInput(mode, difficulty, shuffle, variation) + ' randomizer seed at http://vt.alttp.run/h/' + resp["hash"] + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
+                            if (bot.races[serverID].pingrole !== null && bot.races[serverID].pingrole !== undefined) {
+                                bot.sendMessage({
+                                    to: channelID,
+                                    message: '<@&' + bot.races[serverID].pingrole + '> A randomizer race is starting!',
+                                });
+                            }
+
+                            bot.races[serverID].latest[user.toLowerCase()] = {
+                                initiator: user.toLowerCase(),
+                                hash: resp["hash"],
+                                difficulty: difficulty,
+                                mode: mode,
+                                variation: variation,
+                                shuffle: shuffle,
+                                initiated: new Date().getTime(),
+                                status: 'starting',
+                                started: 0,
+                                participants: [],
+                                finished: {},
+                                forfeits: {},
+                                userids: {},
+                            }
+                            bot.races[serverID].all_by_hash[resp["hash"]] = bot.races[serverID].latest[user.toLowerCase()];
+                            bot.saveRaces();
+                        });
                     });
-                    res.on('end', function() {
-                        resp = JSON.parse(buffer);
-                        bot.sendTagged(channelID, userID, 'whipped up a(n) ' + bot.describeSeedFromInput(mode, difficulty, shuffle, variation) + ' randomizer seed at http://vt.alttp.run/h/' + resp["hash"] + ' - Type ".join ' + user + '" to join the race, or simply type .join to join the last initiated race.');
-                        if (bot.races[serverID].pingrole !== null && bot.races[serverID].pingrole !== undefined) {
-                            bot.sendMessage({
-                                to: channelID,
-                                message: '<@&' + bot.races[serverID].pingrole + '> A randomizer race is starting!',
+
+                    seed_description = {
+                        mode: mode,
+                        difficulty: difficulty,
+                        logic: 'NoMajorGlitches',
+                        variation: 'none',
+                        goal: 'ganon',
+                        tournament: true,
+                    }
+
+                    if (variation !== null) {
+                        seed_description['variation'] = variation;
+                    }
+
+                    if (shuffle !== null) {
+                        seed_description['shuffle'] = shuffle;
+                    }
+
+                    post_req.write(JSON.stringify(seed_description));
+                    post_req.end();
+                } else {
+                    var ts = new Date().getTime();
+                    var fn = 'rom' + ts + '.sfc'
+                    var file = fs.createWriteStream(fn);
+                    var request = http.get(process.env.ROM_URL, function(response) {
+                        response.pipe(file);
+                        file.on('finish', function() {
+                            file.close(function() {
+                                bot.doLocalShuffle(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fn)
                             });
-                        }
-
-                        bot.races[serverID].latest[user.toLowerCase()] = {
-                            initiator: user.toLowerCase(),
-                            hash: resp["hash"],
-                            difficulty: difficulty,
-                            mode: mode,
-                            variation: variation,
-                            shuffle: shuffle,
-                            initiated: new Date().getTime(),
-                            status: 'starting',
-                            started: 0,
-                            participants: [],
-                            finished: {},
-                            forfeits: {},
-                            userids: {},
-                        }
-                        bot.races[serverID].all_by_hash[resp["hash"]] = bot.races[serverID].latest[user.toLowerCase()];
-                        bot.saveRaces();
+                        })
                     });
-                });
-
-                seed_description = {
-                    mode: mode,
-                    difficulty: difficulty,
-                    logic: 'NoMajorGlitches',
-                    variation: 'none',
-                    goal: 'ganon',
-                    tournament: true,
                 }
-
-                if (variation !== null) {
-                    seed_description['variation'] = variation;
-                }
-
-                if (shuffle !== null) {
-                    seed_description['shuffle'] = shuffle;
-                }
-
-                post_req.write(JSON.stringify(seed_description));
-                post_req.end();
             break;
 
             case 'get':
