@@ -5,6 +5,7 @@ var AWS = require('aws-sdk');
 var subprocess = require('child_process')
 var python = require('python-shell')
 var fs = require('fs')
+var https = require('https')
 // Configure logger settings
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {
@@ -819,7 +820,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     var ts = new Date().getTime();
                     var fn = 'rom' + ts + '.sfc'
                     var file = fs.createWriteStream(fn);
-                    var request = http.get(process.env.ROM_URL, function(response) {
+                    var request = https.get(process.env.ROM_URL, function(response) {
                         response.pipe(file);
                         file.on('finish', function() {
                             file.close(function() {
