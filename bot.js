@@ -620,9 +620,11 @@ bot.describeSeedFromRace = function(race) {
     return bot.describeSeedFromInput(mode, difficutly, shuffle, variation);
 }
 
-bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fn) {
+bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fnb) {
+    var fn = fnb + '.sfc';
+    var sfnb = 'shuffled-' + fnb;
     var sfn = 'shuffled-' + fn;
-    var pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode, '--out=' + sfn, '--silent'];
+    var pargs = ['--algorithm=balanced', '--rom=' + fn, '--difficulty=' + difficulty, '--mode=' + mode, '--out=' + sfnb, '--silent'];
     if (['timed-race', 'timed-ohko', 'ohko'].indexOf(variation) >= 0) {
         pargs.push('--timer=' + variation);
     } else if (variation == 'key-sanity') {
@@ -820,13 +822,14 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     post_req.end();
                 } else {
                     var ts = new Date().getTime();
-                    var fn = 'rom' + ts + '.sfc'
+                    var fnb = 'rom' + ts;
+                    var fn = fnb + 'sfc';
                     var file = fs.createWriteStream(fn);
                     var request = https.get(process.env.ROM_URL, function(response) {
                         response.pipe(file);
                         file.on('finish', function() {
                             file.close(function() {
-                                bot.doLocalShuffle(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fn)
+                                bot.doLocalShuffle(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fnb)
                             });
                         })
                     });
