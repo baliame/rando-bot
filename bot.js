@@ -823,7 +823,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 } else {
                     var ts = new Date().getTime();
                     var fnb = 'rom' + ts;
-                    var fn = fnb + 'sfc';
+                    var fn = fnb + '.sfc';
                     var file = fs.createWriteStream(fn);
                     var request = https.get(process.env.ROM_URL, function(response) {
                         response.pipe(file);
