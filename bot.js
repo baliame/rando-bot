@@ -417,7 +417,7 @@ bot.saveRacesBackup = function(bkey) {
 bot.saveROM = function(local, bkey, cb) {
     var contents = fs.readFileSync(local, 'binary');
     var params = {
-        Bucker: bucket,
+        Bucket: bucket,
         Key: bkey,
         Body: contents,
     }
