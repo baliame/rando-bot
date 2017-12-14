@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 text_addresses = {'Pedestal': (0x180300, 256),
                   'Triforce': (0x180400, 256),
                   'Uncle': (0x180500, 256),
