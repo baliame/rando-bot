@@ -46,7 +46,7 @@ bot.sleep = function(ms) {
     while (new Date().getTime() - ms < start);
 }
 
-bot.makeCacheForUser = function(user) {
+bot.makeCacheForUser = function(user, serverID) {
     var cacheEntry = {
         username: user.username,
         total_time: 0,
@@ -60,7 +60,7 @@ bot.makeCacheForUser = function(user) {
         score: 0,
     }
     for (var i = 0; i < user.races.length; i++) {
-        var race = bot.races.all_by_hash[user.races[i]];
+        var race = bot.races[serverID].all_by_hash[user.races[i]];
 
         if (race.status != 'finished') {
             continue;
@@ -159,7 +159,7 @@ bot.winScoreForRace = function(race, username) {
 bot.getUserStats = function(serverID, username) {
     if (username in bot.races[serverID].user_data) {
         if (bot.races[serverID].user_data[username].dirty) {
-            return bot.makeCacheForUser(bot.races[serverID].user_data[username]);
+            return bot.makeCacheForUser(bot.races[serverID].user_data[username], serverID);
         } else {
             return bot.races[serverID].user_data[username].cache;
         }
@@ -187,7 +187,7 @@ bot.getUserStats = function(serverID, username) {
 bot.getUserStatsNoCreate = function(serverID, username) {
     if (username in bot.races[serverID].user_data) {
         if (bot.races[serverID].user_data[username].dirty) {
-            return bot.makeCacheForUser(bot.races[serverID].user_data[username]);
+            return bot.makeCacheForUser(bot.races[serverID].user_data[username], serverID);
         } else {
             return bot.races[serverID].user_data[username].cache;
         }
@@ -1195,7 +1195,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     delete bot.races[serverID].latest[race.initiator];
                     bot.races[serverID].finished.push(race);
                 }
-                bot.makeCacheForUser(bot.getUserData(serverID, user));
+                bot.makeCacheForUser(bot.getUserData(serverID, user), serverID);
                 bot.saveRaces();
             break;
 
