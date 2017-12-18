@@ -619,7 +619,7 @@ bot.describeSeedFromRace = function(race) {
     if ('variation' in race) {
         variation = race.variation;
     }
-    return bot.describeSeedFromInput(mode, difficutly, shuffle, variation);
+    return bot.describeSeedFromInput(mode, difficulty, shuffle, variation);
 }
 
 bot.doLocalShuffle = function(user, serverID, userID, channelID, difficulty, mode, variation, shuffle, fnb) {
