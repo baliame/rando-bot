@@ -959,13 +959,13 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 if (race.status == 'starting' || race.status == 'in-progress') {
                     bot.sendTagged(channelID, userID, 'Your race has been cancelled :(');
                     race.status = 'cancelled';
-                    bot.saveRaces();
 
                     for (var name in race.participants) {
                         if (name in bot.races[serverID].in_race) {
                             delete bot.races[serverID].in_race[name];
                         }
                     }
+                    bot.saveRaces();
                     return;
                 }
 
@@ -1337,6 +1337,23 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         args.splice(0, 1);
                         var name = args.join(' ');
                         bot.sendTagged(channelID, userID, bot.getUserStats(serverID, user).score);
+                    } else if (args[0] == 'destroy') {
+                        var hash = args[1];
+                        if (!(hash in bot.races[serverID].all_by_hash)) {
+                            bot.sendError(channelID, userID, 'Cannot find it.');
+                            return;
+                        }
+
+                        race = bot.races[serverID].all_by_hash[target];
+                        bot.sendTagged(channelID, userID, 'Done.');
+                        race.status = 'cancelled';
+
+                        for (var name in race.participants) {
+                            if (name in bot.races[serverID].in_race) {
+                                delete bot.races[serverID].in_race[name];
+                            }
+                        }
+                        bot.saveRaces();
                     } else if (args[0] == 'getpingrole') {
                         bot.sendTagged(channelID, userID, 'Bot ping role ID is ' + bot.races[serverID].pingrole);
                     }
