@@ -1344,7 +1344,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                             return;
                         }
 
-                        race = bot.races[serverID].all_by_hash[target];
+                        race = bot.races[serverID].all_by_hash[hash];
                         bot.sendTagged(channelID, userID, 'Done.');
                         race.status = 'cancelled';
 
