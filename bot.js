@@ -582,12 +582,12 @@ bot.niceTimeSince = function(start) {
 }
 
 bot.backupProc = function() {
-    logger.debug('Starting 10 minute timer for auto-backup');
+    logger.debug('Starting 60 minute timer for auto-backup');
     setTimeout(function() {
         logger.debug('Executing auto-backup.');
         bot.saveRacesBackup('auto_backup-' + new Date().toISOString() + '.json');
         bot.backupProc();
-    }, 10 * 60 * 1000);
+    }, 60 * 60 * 1000);
 }
 
 bot.backupProc();
