@@ -125,7 +125,7 @@ bot.makeCacheForUser = function(user, serverID) {
     }
     cacheEntry.score = cacheEntry.winscore * mult;
     user.cache = cacheEntry;
-    cache.dirty = false;
+    cacheEntry.dirty = false;
     return cacheEntry;
 }
 
