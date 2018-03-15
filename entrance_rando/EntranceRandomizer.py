@@ -200,6 +200,9 @@ def start():
                             Output .json patch to stdout instead of a patched rom. Used
                             for VT site integration, do not use otherwise.
                             ''')
+    parser.add_argument('--out', default=False, help='''\
+                            Output rom to specified filename.
+                            ''')
     args = parser.parse_args()
 
     if is_bundled() and len(sys.argv) == 1:

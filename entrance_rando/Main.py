@@ -122,7 +122,7 @@ def main(args, seed=None):
         if args.jsonout:
             print(json.dumps({'patch': rom.patches, 'spoiler': world.spoiler.to_json()}))
         else:
-            rom.write_to_file(args.jsonout or output_path('%s.sfc' % outfilebase))
+            rom.write_to_file(args.jsonout or args.out or output_path('%s.sfc' % outfilebase))
 
     if args.create_spoiler and not args.jsonout:
         world.spoiler.to_file(output_path('%s_Spoiler.txt' % outfilebase))
