@@ -6,7 +6,6 @@ import random
 import textwrap
 import sys
 
-from Gui import guiMain
 from Main import main
 from Utils import is_bundled, close_console
 
@@ -197,7 +196,6 @@ def start():
                              sprite that will be extracted.
                              ''')
     parser.add_argument('--suppress_rom', help='Do not create an output rom file.', action='store_true')
-    parser.add_argument('--gui', help='Launch the GUI', action='store_true')
     parser.add_argument('--jsonout', action='store_true', help='''\
                             Output .json patch to stdout instead of a patched rom. Used
                             for VT site integration, do not use otherwise.
@@ -205,12 +203,7 @@ def start():
     args = parser.parse_args()
 
     if is_bundled() and len(sys.argv) == 1:
-        # for the bundled builds, if we have no arguments, the user
-        # probably wants the gui. Users of the bundled build who want the command line
-        # interface shouuld specify at least one option, possibly setting a value to a
-        # default if they like all the defaults
         close_console()
-        guiMain()
         sys.exit(0)
 
     # ToDo: Validate files further than mere existance
@@ -228,15 +221,14 @@ def start():
     loglevel = {'error': logging.ERROR, 'info': logging.INFO, 'warning': logging.WARNING, 'debug': logging.DEBUG}[args.loglevel]
     logging.basicConfig(format='%(message)s', level=loglevel)
 
-    if args.gui:
-        guiMain(args)
-    elif args.count is not None:
+    if args.count is not None:
         seed = args.seed
         for _ in range(args.count):
             main(seed=seed, args=args)
             seed = random.randint(0, 999999999)
     else:
         main(seed=args.seed, args=args)
+
 
 if __name__ == '__main__':
     start()
