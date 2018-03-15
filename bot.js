@@ -720,7 +720,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         mode = arg;
                     } else if (['easy', 'normal', 'hard', 'expert', 'insane'].indexOf(arg) >= 0) {
                         difficulty = arg;
-                    } else if (['simple', 'restricted', 'full', 'madness', 'insanity'].indexOf(arg) >= 0) {
+                    } else if (['simple', 'restricted', 'full', 'madness', 'insanity', 'crossed'].indexOf(arg) >= 0) {
                         shuffle = arg;
                     } else if (['timed-race', 'timed-ohko', 'ohko', 'triforce-hunt', 'key-sanity', 'keysanity'].indexOf(arg) >= 0) {
                         if (arg == 'keysanity') {
@@ -1469,7 +1469,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                                 'Available keywords for difficulty: easy, normal, hard, expert, insane\n'+
                                 'Available keywords for mode: standard, open, swordless\n'+
                                 'Available keywords for variation: timed-race, timed-ohko, ohko, triforce-hunt, keysanity\n'+
-                                'Available keywords for entrance shuffle: simple, restricted, full, madness, insanity\n'+
+                                'Available keywords for entrance shuffle: simple, restricted, full, crossed, madness, insanity\n'+
                                 'Default keywords: open normal';
                             break;
 

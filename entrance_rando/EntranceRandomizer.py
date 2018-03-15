@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import os
 import logging
@@ -5,7 +6,9 @@ import random
 import textwrap
 import sys
 
+from Gui import guiMain
 from Main import main
+from Utils import is_bundled, close_console
 
 
 class ArgumentDefaultsHelpFormatter(argparse.RawTextHelpFormatter):
@@ -14,7 +17,7 @@ class ArgumentDefaultsHelpFormatter(argparse.RawTextHelpFormatter):
         return textwrap.dedent(action.help)
 
 
-if __name__ == '__main__':
+def start():
     parser = argparse.ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('--create_spoiler', help='Output a Spoiler File', action='store_true')
     parser.add_argument('--logic', default='noglitches', const='noglitches', nargs='?', choices=['noglitches', 'minorglitches'],
@@ -117,30 +120,31 @@ if __name__ == '__main__':
                                           slightly biased to placing progression items with
                                           less restrictions.
                              ''')
-    parser.add_argument('--shuffle', default='full', const='full', nargs='?', choices=['vanilla', 'simple', 'restricted', 'full', 'madness', 'insanity', 'dungeonsfull', 'dungeonssimple'],
+    parser.add_argument('--shuffle', default='full', const='full', nargs='?', choices=['vanilla', 'simple', 'restricted', 'full', 'crossed', 'insanity', 'restricted_legacy', 'full_legacy', 'madness_legacy', 'insanity_legacy', 'dungeonsfull', 'dungeonssimple'],
                         help='''\
                              Select Entrance Shuffling Algorithm. (default: %(default)s)
-                             Full:       Mix cave and dungeon entrances freely.
+                             Full:       Mix cave and dungeon entrances freely while limiting
+                                         multi-entrance caves to one world.
                              Simple:     Shuffle Dungeon Entrances/Exits between each other
                                          and keep all 4-entrance dungeons confined to one
                                          location. All caves outside of death mountain are
-                                         shuffled in pairs.
+                                         shuffled in pairs and matched by original type.
                              Restricted: Use Dungeons shuffling from Simple but freely
                                          connect remaining entrances.
-                             Madness:    Decouple entrances and exits from each other and
-                                         shuffle them freely, only ensuring that no fake
-                                         Light/Dark World happens and all locations are
-                                         reachable.
-                             Insanity:   Madness without the world restrictions. Mirror and
-                                         Pearl are provided early to ensure Filling algorithm
-                                         works properly. Deal with Fake LW/DW at your
-                                         discretion.
-                                         Experimental.
+                             Crossed:    Mix cave and dungeon entrances freely while allowing
+                                         caves to cross between worlds.
+                             Insanity:   Decouple entrances and exits from each other and
+                                         shuffle them freely. Caves that used to be single
+                                         entrance will still exit to the same location from
+                                         which they are entered.
+                             Vanilla:    All entrances are in the same locations they were
+                                         in the base game.
+                             Legacy shuffles preserve behavior from older versions of the
+                             entrance randomizer including significant technical limitations.
                              The dungeon variants only mix up dungeons and keep the rest of
                              the overworld vanilla.
                              ''')
     parser.add_argument('--rom', default='Zelda no Densetsu - Kamigami no Triforce (Japan).sfc', help='Path to an ALttP JAP(1.0) rom to use as a base.')
-    parser.add_argument('--out', default='', help='Where to put this.')
     parser.add_argument('--loglevel', default='info', const='info', nargs='?', choices=['error', 'info', 'warning', 'debug'], help='Select level of logging for output.')
     parser.add_argument('--seed', help='Define seed number to generate.', type=int)
     parser.add_argument('--count', help='''\
@@ -150,16 +154,19 @@ if __name__ == '__main__':
                              --seed given will produce the same 10 (different) roms each
                              time).
                              ''', type=int)
-    parser.add_argument('--fastmenu', help='Enable instant menu', action='store_true')
+    parser.add_argument('--fastmenu', default='normal', const='normal', nargs='?', choices=['normal', 'instant', 'double', 'triple', 'quadruple', 'half'],
+                        help='''\
+                             Select the rate at which the menu opens and closes.
+                             (default: %(default)s)
+                             ''')
     parser.add_argument('--quickswap', help='Enable quick item swapping with L and R.', action='store_true')
     parser.add_argument('--disablemusic', help='Disables game music.', action='store_true')
     parser.add_argument('--keysanity', help='''\
                              Keys (and other dungeon items) are no longer restricted to
                              their dungeons, but can be anywhere
                              ''', action='store_true')
-    parser.add_argument('--silent', help='''\
-                             Stop printing stuff to STDERR, seriously, why.
-                             ''', action='store_true')
+    parser.add_argument('--custom', default=False, help='Not supported.')
+    parser.add_argument('--customitemarray', default=False, help='Not supported.')
     parser.add_argument('--nodungeonitems', help='''\
                              Remove Maps and Compasses from Itempool, replacing them by
                              empty slots.
@@ -169,15 +176,19 @@ if __name__ == '__main__':
                              ensure all locations are reachable. This only has an effect
                              on the restrictive algorithm currently.
                              ''', action='store_true')
-    parser.add_argument('--shuffleganon', help='''\
-                             If set, include the Pyramid Hole and Ganon's Tower in the
-                             entrance shuffle pool.
-                             ''', action='store_true')
+    # included for backwards compatibility
+    parser.add_argument('--shuffleganon', help=argparse.SUPPRESS, action='store_true', default=True)
+    parser.add_argument('--no-shuffleganon', help='''\
+                             If set, the Pyramid Hole and Ganon's Tower are not
+                             included entrance shuffle pool.
+                             ''', action='store_false', dest='shuffleganon')
     parser.add_argument('--heartbeep', default='normal', const='normal', nargs='?', choices=['normal', 'half', 'quarter', 'off'],
                         help='''\
                              Select the rate at which the heart beep sound is played at
                              low health. (default: %(default)s)
                              ''')
+    parser.add_argument('--heartcolor', default='red', const='red', nargs='?', choices=['red', 'blue', 'green', 'yellow'],
+                        help='Select the color of Link\'s heart meter. (default: %(default)s)')
     parser.add_argument('--sprite', help='''\
                              Path to a sprite sheet to use for Link. Needs to be in
                              binary format and have a length of 0x7000 (28672) bytes,
@@ -186,11 +197,21 @@ if __name__ == '__main__':
                              sprite that will be extracted.
                              ''')
     parser.add_argument('--suppress_rom', help='Do not create an output rom file.', action='store_true')
+    parser.add_argument('--gui', help='Launch the GUI', action='store_true')
     parser.add_argument('--jsonout', action='store_true', help='''\
                             Output .json patch to stdout instead of a patched rom. Used
                             for VT site integration, do not use otherwise.
                             ''')
     args = parser.parse_args()
+
+    if is_bundled() and len(sys.argv) == 1:
+        # for the bundled builds, if we have no arguments, the user
+        # probably wants the gui. Users of the bundled build who want the command line
+        # interface shouuld specify at least one option, possibly setting a value to a
+        # default if they like all the defaults
+        close_console()
+        guiMain()
+        sys.exit(0)
 
     # ToDo: Validate files further than mere existance
     if not args.jsonout and not os.path.isfile(args.rom):
@@ -207,11 +228,15 @@ if __name__ == '__main__':
     loglevel = {'error': logging.ERROR, 'info': logging.INFO, 'warning': logging.WARNING, 'debug': logging.DEBUG}[args.loglevel]
     logging.basicConfig(format='%(message)s', level=loglevel)
 
-    if args.count is not None:
+    if args.gui:
+        guiMain(args)
+    elif args.count is not None:
         seed = args.seed
-        for i in range(args.count):
+        for _ in range(args.count):
             main(seed=seed, args=args)
             seed = random.randint(0, 999999999)
     else:
         main(seed=args.seed, args=args)
-    sys.exit(0)
+
+if __name__ == '__main__':
+    start()

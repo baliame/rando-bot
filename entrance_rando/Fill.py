@@ -1,6 +1,8 @@
 import random
 import logging
 
+class FillError(RuntimeError):
+    pass
 
 def distribute_items_cutoff(world, cutoffrate=0.33):
     # get list of locations to fill in
@@ -53,11 +55,11 @@ def distribute_items_cutoff(world, cutoffrate=0.33):
                     logging.getLogger('').warning('Not all locations reachable. Game beatable anyway.')
                     progress_done = True
                     continue
-                raise RuntimeError('No more progress items left to place.')
+                raise FillError('No more progress items left to place.')
 
         spot_to_fill = None
-        for location in (fill_locations if placed_advancement_items / total_advancement_items < cutoffrate else reversed(fill_locations)):
-            if world.state.can_reach(location) and location.can_fill(item_to_place):
+        for location in fill_locations if placed_advancement_items / total_advancement_items < cutoffrate else reversed(fill_locations):
+            if location.can_fill(world.state, item_to_place):
                 spot_to_fill = location
                 break
 
@@ -66,13 +68,13 @@ def distribute_items_cutoff(world, cutoffrate=0.33):
             if world.can_beat_game():
                 logging.getLogger('').warning('Not all items placed. Game beatable anyway.')
                 break
-            raise RuntimeError('No more spots to place %s' % item_to_place)
+            raise FillError('No more spots to place %s' % item_to_place)
 
         world.push_item(spot_to_fill, item_to_place, True)
         itempool.remove(item_to_place)
         fill_locations.remove(spot_to_fill)
 
-    logging.getLogger('').debug('Unplaced items: %s - Unfilled Locations: %s' % ([item.name for item in itempool], [location.name for location in fill_locations]))
+    logging.getLogger('').debug('Unplaced items: %s - Unfilled Locations: %s', [item.name for item in itempool], [location.name for location in fill_locations])
 
 
 def distribute_items_staleness(world):
@@ -121,7 +123,7 @@ def distribute_items_staleness(world):
                     logging.getLogger('').warning('Not all locations reachable. Game beatable anyway.')
                     progress_done = True
                     continue
-                raise RuntimeError('No more progress items left to place.')
+                raise FillError('No more progress items left to place.')
 
         spot_to_fill = None
         for location in fill_locations:
@@ -129,7 +131,7 @@ def distribute_items_staleness(world):
             if not progress_done and random.randint(0, location.staleness_count) > 2:
                 continue
 
-            if world.state.can_reach(location) and location.can_fill(item_to_place):
+            if location.can_fill(world.state, item_to_place):
                 spot_to_fill = location
                 break
             else:
@@ -138,7 +140,7 @@ def distribute_items_staleness(world):
         # might have skipped too many locations due to potential staleness. Do not check for staleness now to find a candidate
         if spot_to_fill is None:
             for location in fill_locations:
-                if world.state.can_reach(location) and location.can_fill(item_to_place):
+                if location.can_fill(world.state, item_to_place):
                     spot_to_fill = location
                     break
 
@@ -147,13 +149,13 @@ def distribute_items_staleness(world):
             if world.can_beat_game():
                 logging.getLogger('').warning('Not all items placed. Game beatable anyway.')
                 break
-            raise RuntimeError('No more spots to place %s' % item_to_place)
+            raise FillError('No more spots to place %s' % item_to_place)
 
         world.push_item(spot_to_fill, item_to_place, True)
         itempool.remove(item_to_place)
         fill_locations.remove(spot_to_fill)
 
-    logging.getLogger('').debug('Unplaced items: %s - Unfilled Locations: %s' % ([item.name for item in itempool], [location.name for location in fill_locations]))
+    logging.getLogger('').debug('Unplaced items: %s - Unfilled Locations: %s', [item.name for item in itempool], [location.name for location in fill_locations])
 
 
 def fill_restrictive(world, base_state, locations, itempool):
@@ -168,15 +170,16 @@ def fill_restrictive(world, base_state, locations, itempool):
         item_to_place = itempool.pop()
         maximum_exploration_state = sweep_from_pool()
 
+        perform_access_check = True
         if world.check_beatable_only:
-            can_beat_without = world.has_beaten_game(maximum_exploration_state)
+            perform_access_check = not world.has_beaten_game(maximum_exploration_state)
+
 
         spot_to_fill = None
         for location in locations:
-            if location.can_fill(item_to_place):
-                if (world.check_beatable_only and can_beat_without) or maximum_exploration_state.can_reach(location):
-                    spot_to_fill = location
-                    break
+            if location.can_fill(maximum_exploration_state, item_to_place, perform_access_check):
+                spot_to_fill = location
+                break
 
         if spot_to_fill is None:
             # we filled all reachable spots. Maybe the game can be beaten anyway?
@@ -184,7 +187,7 @@ def fill_restrictive(world, base_state, locations, itempool):
                 if not world.check_beatable_only:
                     logging.getLogger('').warning('Not all items placed. Game beatable anyway.')
                 break
-            raise RuntimeError('No more spots to place %s' % item_to_place)
+            raise FillError('No more spots to place %s' % item_to_place)
 
         world.push_item(spot_to_fill, item_to_place, False)
         locations.remove(spot_to_fill)
@@ -204,7 +207,7 @@ def distribute_items_restrictive(world, gftower_trash_count=0, fill_locations=No
     restitempool = [item for item in world.itempool if not item.advancement and not item.priority]
 
     # fill in gtower locations with trash first
-    if not world.shuffle_ganon:
+    if world.ganonstower_vanilla:
         gtower_locations = [location for location in fill_locations if 'Ganons Tower' in location.name]
         random.shuffle(gtower_locations)
         trashcnt = 0
@@ -226,7 +229,7 @@ def distribute_items_restrictive(world, gftower_trash_count=0, fill_locations=No
 
     fast_fill(world, restitempool, fill_locations)
 
-    logging.getLogger('').debug('Unplaced items: %s - Unfilled Locations: %s' % ([item.name for item in progitempool + prioitempool + restitempool], [location.name for location in fill_locations]))
+    logging.getLogger('').debug('Unplaced items: %s - Unfilled Locations: %s', [item.name for item in progitempool + prioitempool + restitempool], [location.name for location in fill_locations])
 
 
 def fast_fill(world, item_pool, fill_locations):
@@ -251,7 +254,7 @@ def flood_items(world):
         random.shuffle(location_list)
         spot_to_fill = None
         for location in location_list:
-            if world.state.can_reach(location) and location.can_fill(itempool[0]):
+            if location.can_fill(world.state, itempool[0]):
                 spot_to_fill = location
                 break
 
@@ -280,7 +283,7 @@ def flood_items(world):
             if candidate_item_to_place is not None:
                 item_to_place = candidate_item_to_place
             else:
-                raise RuntimeError('No more progress items left to place.')
+                raise FillError('No more progress items left to place.')
 
         # find item to replace with progress item
         location_list = world.get_reachable_locations()
