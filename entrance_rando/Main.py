@@ -48,7 +48,8 @@ def main(args, seed=None):
         world.seed = int(seed)
     random.seed(world.seed)
 
-    logger.info('ALttP Entrance Randomizer Version %s  -  Seed: %s\n\n', __version__, world.seed)
+    if not args.silent:
+        logger.info('ALttP Entrance Randomizer Version %s  -  Seed: %s\n\n', __version__, world.seed)
 
     world.difficulty_requirements = difficulties[world.difficulty]
 
@@ -56,20 +57,24 @@ def main(args, seed=None):
 
     create_dungeons(world)
 
-    logger.info('Shuffling the World about.')
+    if not args.silent:
+        logger.info('Shuffling the World about.')
 
     link_entrances(world)
     mark_light_world_regions(world)
 
-    logger.info('Calculating Access Rules.')
+    if not args.silent:
+        logger.info('Calculating Access Rules.')
 
     set_rules(world)
 
-    logger.info('Generating Item Pool.')
+    if not args.silent:
+        logger.info('Generating Item Pool.')
 
     generate_itempool(world)
 
-    logger.info('Placing Dungeon Items.')
+    if not args.silent:
+        logger.info('Placing Dungeon Items.')
 
     shuffled_locations = None
     if args.algorithm in ['balanced', 'vt26'] or args.keysanity:
@@ -79,7 +84,8 @@ def main(args, seed=None):
     else:
         fill_dungeons(world)
 
-    logger.info('Fill the world.')
+    if not args.silent:
+        logger.info('Fill the world.')
 
     if args.algorithm == 'flood':
         flood_items(world)  # different algo, biased towards early game progress items
@@ -97,11 +103,13 @@ def main(args, seed=None):
     elif args.algorithm == 'balanced':
         distribute_items_restrictive(world, gt_filler(world))
 
-    logger.info('Calculating playthrough.')
+    if not args.silent:
+        logger.info('Calculating playthrough.')
 
     create_playthrough(world)
 
-    logger.info('Patching ROM.')
+    if not args.silent:
+        logger.info('Patching ROM.')
 
     if args.sprite is not None:
         if isinstance(args.sprite, Sprite):
@@ -127,8 +135,9 @@ def main(args, seed=None):
     if args.create_spoiler and not args.jsonout:
         world.spoiler.to_file(output_path('%s_Spoiler.txt' % outfilebase))
 
-    logger.info('Done. Enjoy.')
-    logger.debug('Total Time: %s', time.clock() - start)
+    if not args.silent:
+        logger.info('Done. Enjoy.')
+        logger.debug('Total Time: %s', time.clock() - start)
 
     return world
 

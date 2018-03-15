@@ -203,6 +203,7 @@ def start():
     parser.add_argument('--out', default=False, help='''\
                             Output rom to specified filename.
                             ''')
+    parser.add_argument('--silent', action='store_true', help='Shut up.')
     args = parser.parse_args()
 
     if is_bundled() and len(sys.argv) == 1:
