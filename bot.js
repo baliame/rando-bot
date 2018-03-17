@@ -1407,8 +1407,10 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                     }
                 }
                 switch (mode) {
+                    default:
+                        usage = '**Unknown help topic:** ' + mode + '\n';
                     case 'general':
-                        usage = '**List of user commands:** \n' +
+                        usage += '**List of user commands:** \n' +
                         '.help, .create, .get, .getbyhash, .show, .join, .withdraw, .start, .cancel, .done, \n' +
                         '.forfeit, .status, .grant, .ungrant, .clean, .user, .leaderboard \n' +
                         '**Server admin commands:** \n' +
@@ -1450,6 +1452,10 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
                     case 'command':
                         switch(helpcmd) {
+                            default:
+                                usage = 'Unknown command: ' + helpcmd;
+                            break;
+
                             case '.help':
                             case 'help':
                                 usage = 'You already appear to know how to use it.';
