@@ -809,7 +809,6 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                         logic: 'NoMajorGlitches',
                         variation: 'none',
                         goal: 'ganon',
-                        tournament: true,
                     }
 
                     if (variation !== null) {
@@ -1475,6 +1474,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                                 'Available keywords for difficulty: easy, normal, hard, expert, insane\n'+
                                 'Available keywords for mode: standard, open, swordless\n'+
                                 'Available keywords for variation: timed-race, timed-ohko, ohko, triforce-hunt, keysanity\n'+
+                                'Available keywords for goal: timed-race, timed-ohko, ohko, triforce-hunt, keysanity\n'+
                                 'Available keywords for entrance shuffle: simple, restricted, full, crossed, madness, insanity\n'+
                                 'Default keywords: open normal';
                             break;
